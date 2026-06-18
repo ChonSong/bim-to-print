@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sydney 3D-Printed Housing Pilot — Research Overview</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232736;
+    --border: #2d3348;
+    --text: #e2e4ed;
+    --text2: #8b92ab;
+    --accent: #5b8def;
+    --accent2: #43c9a0;
+    --warn: #f0c040;
+    --danger: #e05a5a;
+    --font: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  .hero {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 50%, #1a1d27 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 0 48px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle {
+    color: var(--text2);
+    font-size: 1.1rem;
+    margin-bottom: 24px;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    color: var(--text2);
+    margin: 0 4px;
+  }
+  .hero .badge.accent { border-color: var(--accent); color: var(--accent); }
+  .hero .badge.accent2 { border-color: var(--accent2); color: var(--accent2); }
+  .hero .badge.warn { border-color: var(--warn); color: var(--warn); }
+
+  /* Section headings */
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 48px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    background: var(--accent);
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 28px 0 12px;
+    color: var(--accent);
+  }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .card p { color: var(--text2); font-size: 0.9rem; line-height: 1.5; }
+  .card .price { color: var(--accent2); font-weight: 600; font-size: 1.1rem; }
+  .card .meta { color: var(--text2); font-size: 0.8rem; margin-top: 8px; }
+  .card .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+  .tag.partner { background: #1a3a3a; color: var(--accent2); }
+  .tag.buy { background: #2a2a3a; color: var(--accent); }
+  .tag.rd { background: #3a2a2a; color: var(--warn); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9rem;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:hover td { background: var(--surface); }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 20px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .tl-item.phase0::before { background: var(--warn); }
+  .tl-item.phase1::before { background: var(--accent); }
+  .tl-item.phase2::before { background: var(--accent2); }
+  .tl-item.phase3::before { background: #8b5cf6; }
+  .tl-item.phase4::before { background: #e05a5a; }
+  .tl-item .tl-title {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .tl-item .tl-date {
+    color: var(--text2);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+  .tl-item .tl-desc {
+    color: var(--text2);
+    font-size: 0.9rem;
+  }
+  .tl-item .tl-cost {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  /* Stats */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat .label {
+    font-size: 0.8rem;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* Callout */
+  .callout {
+    background: var(--surface2);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.good { border-left-color: var(--accent2); }
+
+  /* Next steps list */
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 16px 0;
+  }
+  ol.steps li {
+    counter-increment: step;
+    padding: 12px 16px 12px 48px;
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 24px;
+    height: 24px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  ol.steps li .step-title { font-weight: 600; }
+  ol.steps li .step-desc { color: var(--text2); font-size: 0.9rem; }
+
+  /* Key-value list */
+  .kv-list { margin: 12px 0; }
+  .kv-list dt { font-weight: 600; font-size: 0.9rem; margin-top: 8px; }
+  .kv-list dd { color: var(--text2); font-size: 0.9rem; margin-left: 0; }
+
+  .footer {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text2);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .card-grid { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1><span>3D-Printed Housing</span> — Sydney Pilot</h1>
+  <p class="subtitle">Mid-2025 research, vendor analysis, regulatory pathway, and an 18-month executable plan</p>
+  <div>
+    <span class="badge accent">BIM-to-Print</span>
+    <span class="badge accent2">v0.2.0</span>
+    <span class="badge warn">18-month horizon</span>
+    <span class="badge">$410k–861k</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- 1. Executive summary -->
+<h2><span class="num">1</span> The opportunity</h2>
+
+<div class="stat-row">
+  <div class="stat"><div class="value">50,000+</div><div class="label">NSW social housing waitlist</div></div>
+  <div class="stat"><div class="value">25k–30k</div><div class="label">Sydney annual dwelling shortfall</div></div>
+  <div class="stat"><div class="value">−50%</div><div class="label">Potential wall cost savings</div></div>
+  <div class="stat"><div class="value">18 mo</div><div class="label">Pilot to occupation</div></div>
+</div>
+
+<p>
+Sydney faces a structural housing deficit that traditional construction cannot address at scale — formwork costs, skilled labour shortages, and project timelines all constrain output. <strong>3D concrete printing (3DCP)</strong> can halve wall construction costs and cut build time by 60–70%, while requiring less skilled labour and virtually no formwork.
+</p>
+
+<div class="callout">
+  <strong>First mover advantage:</strong> Australia's first <em>occupied</em> 3D-printed house (Contour3D, Woolooware) is already standing. The NSW Government has established a dedicated unit (Warne Properties) for 3D-printed social housing. The window for a second-mover pilot is narrow.
+</div>
+
+<!-- 2. Landscape -->
+<h2><span class="num">2</span> Market landscape</h2>
+
+<div class="card-grid">
+  <div class="card">
+    <h4>📉 Housing undersupply</h4>
+    <p>NSW targets 314,000 new homes by 2029. Greater Sydney alone is <strong>25,000–30,000 dwellings</strong> short per year — a gap that widens as population grows faster than completions.</p>
+  </div>
+  <div class="card">
+    <h4>🏗️ Construction cost crisis</h4>
+    <p>Traditional wall construction costs <strong>$530–1,020/m²</strong> primarily due to formwork and labour. 3DCP wall systems can deliver at <strong>$250–510/m²</strong> — a ~50% reduction with comparable structural performance.</p>
+  </div>
+  <div class="card">
+    <h4>🏛️ Government appetite</h4>
+    <p>The <strong>NSW Warne Properties Unit</strong> is actively piloting 3DCP for social housing. Councils in growth corridors (Liverpool, Camden, Blacktown) need rapid housing solutions and are receptive to innovation.</p>
+  </div>
+  <div class="card">
+    <h4>🧪 Regulatory pathway emerging</h4>
+    <p>No prescriptive NCC standard yet for 3DCP, but the <strong>Evidence-of-Suitability</strong> path under A2G2 is well-established. Labs (ULTRA Labs, RMIT, UTS) now have 3DCP concrete testing capability.</p>
+  </div>
+</div>
+
+<!-- 3. Vendors -->
+<h2><span class="num">3</span> Printer vendors</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Vendor</th>
+      <th>Type</th>
+      <th>Envelope</th>
+      <th>Speed</th>
+      <th>Price</th>
+      <th>Model</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Contour3D</strong> 🇦🇺</td>
+      <td>Proprietary gantry</td>
+      <td>2‑bedroom scale</td>
+      <td>N/D</td>
+      <td class="price">Service model</td>
+      <td><span class="tag partner">Partner</span></td>
+    </tr>
+    <tr>
+      <td><strong>Luyten 3D</strong> 🇦🇺</td>
+      <td>Gantry</td>
+      <td>1.5×1.5×100 m</td>
+      <td>60–70% faster</td>
+      <td class="price">$300–500k</td>
+      <td><span class="tag buy">Buy</span></td>
+    </tr>
+    <tr>
+      <td><strong>CyBe</strong> 🇳🇱</td>
+      <td>Robot arm</td>
+      <td>~2–3 m radius</td>
+      <td>Moderate</td>
+      <td class="price">~€49k ($80k)</td>
+      <td><span class="tag rd">R&amp;D</span></td>
+    </tr>
+    <tr>
+      <td><strong>PaCompatible</strong> 🇦🇺</td>
+      <td>Mobile gantry</td>
+      <td>Truck-deployable</td>
+      <td>250 mm/s</td>
+      <td class="price">$519k</td>
+      <td><span class="tag buy">Buy</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Decision matrix — weighted scoring</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Vendor</th>
+      <th>AU avail <span style="color:var(--text2);font-weight:400">(25%)</span></th>
+      <th>Reg precedent <span style="color:var(--text2);font-weight:400">(20%)</span></th>
+      <th>Envelope <span style="color:var(--text2);font-weight:400">(15%)</span></th>
+      <th>Speed <span style="color:var(--text2);font-weight:400">(10%)</span></th>
+      <th>Cost <span style="color:var(--text2);font-weight:400">(15%)</span></th>
+      <th>Material <span style="color:var(--text2);font-weight:400">(10%)</span></th>
+      <th>Support <span style="color:var(--text2);font-weight:400">(5%)</span></th>
+      <th><strong>Score</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:var(--surface)">
+      <td><strong>🥇 Contour3D</strong></td>
+      <td>5</td><td>5</td><td>4</td><td>3</td><td>5</td><td>5</td><td>5</td>
+      <td><strong style="color:var(--accent2);font-size:1.1rem">4.70</strong></td>
+    </tr>
+    <tr>
+      <td><strong>🥈 Luyten</strong></td>
+      <td>5</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td>
+      <td><strong style="color:var(--accent)">3.85</strong></td>
+    </tr>
+    <tr>
+      <td><strong>🥉 CyBe</strong></td>
+      <td>4</td><td>2</td><td>2</td><td>3</td><td>5</td><td>4</td><td>3</td>
+      <td><strong>3.35</strong></td>
+    </tr>
+    <tr>
+      <td><strong>PaCompatible</strong></td>
+      <td>3</td><td>2</td><td>3</td><td>5</td><td>2</td><td>3</td><td>3</td>
+      <td><strong>2.95</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout good">
+  <strong>Recommended:</strong> Partner with <strong>Contour3D</strong> for the pilot (zero capex, existing compliance path, local Sydney operator). Acquire a <strong>CyBe</strong> (€49k) as an in‑house R&amp;D printer for mix trials. Scale with <strong>Luyten</strong> gantry at production volume.
+</div>
+
+<!-- 4. Regulatory -->
+<h2><span class="num">4</span> Regulatory pathway</h2>
+
+<p>3DCP qualifies as a <strong>Performance Solution</strong> under NCC A2G2 since no Deemed‑to‑Satisfy provision exists yet. The path is well-defined:</p>
+
+<ol class="steps">
+  <li>
+    <div class="step-title">Identify Performance Requirements</div>
+    <div class="step-desc">Map H1P1 (structure), H2P1 (fire), H3P1 (weatherproofing), H4P1 (energy), H5P1 (sound) to your 3DCP wall system.</div>
+  </li>
+  <li>
+    <div class="step-title">Material qualification testing</div>
+    <div class="step-desc">Engage ULTRA Labs or RMIT for a full NATA test suite: compressive, inter‑layer bond, FRL, water penetration, thermal conductivity, airborne sound. Budget <strong>$8,800–21,000</strong>.</div>
+  </li>
+  <li>
+    <div class="step-title">Compile Evidence-of-Suitability dossier</div>
+    <div class="step-desc">Structure the dossier per the template in our research module: project description → performance matrix → test reports → structural engineer certificate → G‑code spec → QA plan.</div>
+  </li>
+  <li>
+    <div class="step-title">Engage a certifier early</div>
+    <div class="step-desc">Pre-engagement by Month 2. Warne Properties Unit can recommend certifiers who've assessed 3DCP. Do not design to DTS and hope — involve certifier at design stage.</div>
+  </li>
+  <li>
+    <div class="step-title">Obtain Construction Certificate + Occupation Certificate</div>
+    <div class="step-desc">DA (Month 6–10) → CC (Month 10–12) → Print with in-process inspection → OC (Month 16–18).</div>
+  </li>
+</ol>
+
+<div class="callout warn">
+  <strong>Key risk:</strong> Certifier hesitancy due to novelty. Mitigate by leveraging Warne Properties' existing 3DCP work and by preparing the full EoS dossier before submitting the CC application.
+</div>
+
+<!-- 5. Timeline -->
+<h2><span class="num">5</span> 18-month execution plan</h2>
+
+<div class="timeline">
+  <div class="tl-item phase0">
+    <div class="tl-date">Months 0–4 · $10k–26k</div>
+    <div class="tl-title">Phase 0 — Research &amp; validation</div>
+    <div class="tl-desc">
+      Shortlist vendors · Contact Contour3D, CyBe, Luyten · Concrete mix proposals from 2–3 suppliers · ULTRA Labs structural testing (28‑day cure) · Engage certifier · Calibrate bim2print settings
+    </div>
+    <div class="tl-cost">Deliverable: Decision matrix + test reports</div>
+  </div>
+
+  <div class="tl-item phase1">
+    <div class="tl-date">Months 3–8 · $40k–75k</div>
+    <div class="tl-title">Phase 1 — Design &amp; compliance</div>
+    <div class="tl-desc">
+      70 m² 2‑bedroom BIM model (IFC) · DA submission to council · EoS dossier compilation · Fire resistance test (FRL) · Structural engineer certificate · Certifier review → Construction Certificate
+    </div>
+    <div class="tl-cost">Deliverable: CC granted + DA approved</div>
+  </div>
+
+  <div class="tl-item phase2">
+    <div class="tl-date">Months 6–10 · $100k–240k</div>
+    <div class="tl-title">Phase 2 — Procurement &amp; site prep</div>
+    <div class="tl-desc">
+      Finalise printer partnership · Site selection + lease · Concrete mix qualification · Site prep (pad, utilities, access) · Printer delivery + commissioning + test print
+    </div>
+    <div class="tl-cost">Deliverable: Site + printer ready</div>
+  </div>
+
+  <div class="tl-item phase3">
+    <div class="tl-date">Months 10–14 · $100k–250k</div>
+    <div class="tl-title">Phase 3 — Print &amp; monitor</div>
+    <div class="tl-desc">
+      Generate G‑code from BIM via bim2print · Pre‑print certifier inspection · Wall printing (2–4 months) · In‑process QA (layer adhesion, dimensions) · Post‑print core sampling + structural check
+    </div>
+    <div class="tl-cost">Deliverable: Completed wall system</div>
+  </div>
+
+  <div class="tl-item phase4">
+    <div class="tl-date">Months 12–17 · $150k–250k</div>
+    <div class="tl-title">Phase 4 — Fit-out &amp; commission</div>
+    <div class="tl-desc">
+      Roof structure · MEP rough‑in · Interior finishes (render, paint, floors) · Exterior finishing · Final inspection → Occupation Certificate
+    </div>
+    <div class="tl-cost">Deliverable: OC granted</div>
+  </div>
+</div>
+
+<!-- 6. Budget -->
+<h2><span class="num">6</span> Budget comparison</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th>Printer</th>
+      <th>Labour</th>
+      <th>Fit-out</th>
+      <th>Testing</th>
+      <th>Site</th>
+      <th>Subtotal</th>
+      <th>+20% contingency</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="background:var(--surface)">
+      <td><strong>Pilot w/ Contour3D</strong></td>
+      <td>$0</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
+      <td><strong>$362–519k</strong></td>
+      <td><strong>$434–623k</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Pilot w/ CyBe</strong></td>
+      <td>$100–120k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
+      <td><strong>$462–639k</strong></td>
+      <td><strong>$554–767k</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Pilot w/ Luyten</strong></td>
+      <td>$345–595k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
+      <td><strong>$707–1,114k</strong></td>
+      <td><strong>$848–1,337k</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout good">
+  <strong>Break-even (CyBe):</strong> At $280/m² savings vs traditional wall construction, the €49k printer pays for itself after 357–429 m² of printed wall — approximately 5–6 dwellings.
+</div>
+
+<!-- 7. Next steps -->
+<h2><span class="num">7</span> Immediate action plan</h2>
+
+<ol class="steps">
+  <li>
+    <div class="step-title">Contact Contour3D</div>
+    <div class="step-desc">Reach out via contour3d.com.au. Reference the James Hardie social‑housing pilot. Propose a specific second pilot — your design, their print. Request Woolooware site visit.</div>
+  </li>
+  <li>
+    <div class="step-title">Shortlist CyBe for R&amp;D printer</div>
+    <div class="step-desc">Request a demo unit shipped to Sydney. At €49k it's negligible compared to build costs and gives you in‑house mix trial capability.</div>
+  </li>
+  <li>
+    <div class="step-title">Engage ULTRA Labs for test quotes</div>
+    <div class="step-desc">Request a quote for the full EoS test suite: compressive strength, bond strength, FRL, water penetration, thermal conductivity, sound insulation. Budget $8,800–21,000.</div>
+  </li>
+  <li>
+    <div class="step-title">Contact Warne Properties Unit</div>
+    <div class="step-desc">Cold outreach through NSW Planning — they can provide compliance pathway guidance and certifier recommendations based on their existing 3DP social housing pilot.</div>
+  </li>
+  <li>
+    <div class="step-title">Prepare grant application</div>
+    <div class="step-desc">Target the NSW Affordable Housing Innovation Fund ($50k–500k) and NSW Building Innovation Fund ($100k–1M). Use the <a href="grant-proposal-template.md">grant proposal template</a> in our docs.</div>
+  </li>
+  <li>
+    <div class="step-title">Generate pilot G-code from BIM model</div>
+    <div class="step-desc">Once the design is ready, run it through <code>bim2print</code>. The pipeline already handles walls with openings, columns, and multiple profiles — exactly what you need for a 70 m² dwelling.</div>
+  </li>
+</ol>
+
+<!-- Footer -->
+<div class="footer">
+  <p><strong>bim-to-print</strong> · <a href="https://github.com/ChonSong/bim-to-print">ChonSong/bim-to-print</a> · v0.2.0</p>
+  <p>Built from the <a href="INDEX.md">research module</a> — vendor database · decision matrix · regulatory pathway · pilot roadmap · financial model · EoS dossier · grant proposal</p>
+</div>
+
+</div>
+</body>
+</html>

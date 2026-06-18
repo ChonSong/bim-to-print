@@ -2,6 +2,8 @@
 
 Master index of market research, vendor intelligence, regulatory pathways, and go-to-market artifacts for 3D concrete printing in Sydney, Australia.
 
+> **🗺️ Start here:** [`overview.html`](overview.html) — interactive visual summary of the entire plan (vendor choices, timeline, budget, regulatory path, next steps).
+
 ---
 
 ## Quick navigation
