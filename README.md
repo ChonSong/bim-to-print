@@ -108,6 +108,36 @@ bim-to-print/
 - **Optional (GH gen)**: `lxml` (built-in XML support)
 - **Dev**: `pytest`, `pytest-cov`
 
+## Research module — Sydney 3D-printed housing
+
+The [`docs/research/`](docs/research/) directory contains a comprehensive mid-2025 analysis of the 3D concrete printing landscape for residential construction in Sydney, covering:
+
+| Document | What it covers |
+|----------|---------------|
+| [Vendor database](docs/research/vendor-database.md) | Contour3D, Luyten, CyBe, PaCompatible — specs, pricing, contacts |
+| [Decision matrix](docs/research/decision-matrix.md) | Weighted comparison (cost × speed × envelope × maturity) |
+| [Lab & certification directory](docs/research/lab-certification-directory.md) | ULTRA Labs, RMIT, UTS, certifiers, NCC clause map |
+| [Software stack](docs/research/software-stack.md) | Rhino+GH, Fusion 360, COMPAS, `bim2print` integration |
+| [Market landscape](docs/research/sydney-market-landscape.md) | Housing demand, council interest, cost drivers, strategic positioning |
+| [Regulatory pathway](docs/research/regulatory-pathway.md) | NCC Performance Solution path, EoS dossier, certifier engagement |
+| [Pilot roadmap](docs/research/pilot-roadmap.md) | 18-month phased plan with budgets and risk log |
+| [Grant proposal template](docs/research/grant-proposal-template.md) | 1-page brief for councils and grant bodies |
+| [EoS dossier template](docs/research/evidence-of-suitability-dossier.md) | Full evidence package structure for certifier submission |
+| [Financial model](docs/research/financial-model-template.md) | CAPEX/OPEX, break-even analysis, per-print cost estimator |
+| [Master index](docs/research/INDEX.md) | Quick navigation of all research artifacts |
+
+## Architecture
+
+### Data flow [![Pipeline](https://img.shields.io/badge/pipeline-IFC%2FGH%E2%86%92G--code-blue)](docs/ARCHITECTURE.md)
+
+```
+IFC / GH JSON → Reader → Slicer → Toolpath → G-code → Printer
+                                                      ↓
+                                              Research module
+                                              (vendors, compliance,
+                                               markets, roadmap)
+```
+
 ## License
 
 MIT — see `LICENSE`

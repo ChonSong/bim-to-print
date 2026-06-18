@@ -91,7 +91,7 @@ def pipeline_from_gh(
     Returns:
         Summary dict.
     """
-    from .ifc_reader import BuildingModel, ExtrudedProfile
+    from .ifc_reader import BuildingModel, ExtrudedProfile, Opening
 
     profiles = [
         ExtrudedProfile(
@@ -100,6 +100,15 @@ def pipeline_from_gh(
             points_2d=p["points_2d"],
             base_elevation=p.get("base_elevation", 0.0),
             height=p.get("height", 3000.0),
+            openings=[
+                Opening(
+                    shape=op["shape"],
+                    z_start=op["z_start"],
+                    z_end=op["z_end"],
+                    name=op.get("name", "opening"),
+                )
+                for op in p.get("openings", [])
+            ],
         )
         for p in profile_data
     ]

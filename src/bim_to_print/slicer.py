@@ -12,7 +12,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-from .ifc_reader import ExtrudedProfile
+from .ifc_reader import ExtrudedProfile, Opening
 
 
 @dataclass
@@ -24,6 +24,7 @@ class SliceLayer:
     outer_contour: np.ndarray  # N×2 array of outer boundary points (clockwise)
     profile_name: str  # parent profile name
     profile_type: str
+    holes: List[np.ndarray] = field(default_factory=list)  # openings at this Z
 
 
 @dataclass
@@ -75,9 +76,30 @@ def slice_profile(
     num_layers = max(1, int(round(profile.height / layer_height)))
     actual_lh = profile.height / num_layers  # distribute evenly
 
+    # Pre-process openings: convert to absolute Z + ensure clockwise
+    abs_openings: List[tuple[float, float, np.ndarray]] = []
+    for op in profile.openings:
+        z_bottom = bottom + op.z_start
+        z_top = bottom + op.z_end
+        if z_top <= bottom or z_bottom >= top:
+            continue  # opening entirely outside this element
+        hole_pts = np.array(op.shape, dtype=np.float64)
+        if len(hole_pts) >= 3:
+            # Make holes counter-clockwise (so they're the opposite winding
+            # to the outer contour — useful for boolean ops)
+            hole_pts = _make_polygon_clockwise(hole_pts)
+            abs_openings.append((z_bottom, z_top, hole_pts))
+
     layers: List[SliceLayer] = []
     for i in range(num_layers):
         z = bottom + i * actual_lh + actual_lh / 2  # centre of layer
+
+        # Collect holes active at this Z
+        layer_holes: List[np.ndarray] = []
+        for z_bot, z_top, hole_pts in abs_openings:
+            if z_bot <= z <= z_top:
+                layer_holes.append(hole_pts.copy())
+
         layers.append(
             SliceLayer(
                 z=z,
@@ -85,6 +107,7 @@ def slice_profile(
                 outer_contour=points.copy(),
                 profile_name=profile.name,
                 profile_type=profile.ifc_type,
+                holes=layer_holes,
             )
         )
 

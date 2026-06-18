@@ -17,6 +17,16 @@ from typing import List, Optional, Tuple
 
 
 @dataclass
+class Opening:
+    """A void through an extruded profile (door, window, etc.)."""
+
+    shape: List[Tuple[float, float]]  # 2D polygon (clockwise outer)
+    z_start: float  # mm from profile base where opening begins
+    z_end: float    # mm from profile base where opening ends
+    name: str = "opening"
+
+
+@dataclass
 class ExtrudedProfile:
     """A 2D polygonal profile extruded vertically through a height."""
 
@@ -26,6 +36,7 @@ class ExtrudedProfile:
     base_elevation: float  # Z of bottom
     height: float  # extrusion height above base
     material: str = "unknown"
+    openings: List[Opening] = field(default_factory=list)
 
 
 @dataclass
