@@ -16,6 +16,7 @@
     --accent2: #43c9a0;
     --warn: #f0c040;
     --danger: #e05a5a;
+    --purple: #8b5cf6;
     --font: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
     --mono: 'JetBrains Mono', 'Fira Code', monospace;
   }
@@ -29,7 +30,6 @@
   }
   .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
-  /* Header */
   .hero {
     background: linear-gradient(135deg, #1a1d27 0%, #0f1117 50%, #1a1d27 100%);
     border-bottom: 1px solid var(--border);
@@ -62,7 +62,6 @@
   .hero .badge.accent2 { border-color: var(--accent2); color: var(--accent2); }
   .hero .badge.warn { border-color: var(--warn); color: var(--warn); }
 
-  /* Section headings */
   h2 {
     font-size: 1.6rem;
     font-weight: 600;
@@ -92,7 +91,7 @@
     color: var(--accent);
   }
 
-  /* Cards */
+  /* ---- Cards ---- */
   .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -107,14 +106,9 @@
     transition: border-color .2s;
   }
   .card:hover { border-color: var(--accent); }
-  .card h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
+  .card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
   .card p { color: var(--text2); font-size: 0.9rem; line-height: 1.5; }
   .card .price { color: var(--accent2); font-weight: 600; font-size: 1.1rem; }
-  .card .meta { color: var(--text2); font-size: 0.8rem; margin-top: 8px; }
   .card .tag {
     display: inline-block;
     font-size: 0.75rem;
@@ -127,7 +121,26 @@
   .tag.buy { background: #2a2a3a; color: var(--accent); }
   .tag.rd { background: #3a2a2a; color: var(--warn); }
 
-  /* Tables */
+  /* ---- Visual container ---- */
+  .viz-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+  .viz-box svg { max-width: 100%; height: auto; }
+  .viz-caption {
+    text-align: center;
+    color: var(--text2);
+    font-size: 0.85rem;
+    margin-top: -8px;
+    margin-bottom: 16px;
+  }
+
+  /* ---- Tables ---- */
   table {
     width: 100%;
     border-collapse: collapse;
@@ -144,94 +157,10 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
   tr:hover td { background: var(--surface); }
 
-  /* Timeline */
-  .timeline {
-    position: relative;
-    padding-left: 32px;
-    margin: 20px 0;
-  }
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 11px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--border);
-  }
-  .tl-item {
-    position: relative;
-    margin-bottom: 24px;
-  }
-  .tl-item::before {
-    content: '';
-    position: absolute;
-    left: -26px;
-    top: 6px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    border: 2px solid var(--bg);
-  }
-  .tl-item.phase0::before { background: var(--warn); }
-  .tl-item.phase1::before { background: var(--accent); }
-  .tl-item.phase2::before { background: var(--accent2); }
-  .tl-item.phase3::before { background: #8b5cf6; }
-  .tl-item.phase4::before { background: #e05a5a; }
-  .tl-item .tl-title {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  .tl-item .tl-date {
-    color: var(--text2);
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-  }
-  .tl-item .tl-desc {
-    color: var(--text2);
-    font-size: 0.9rem;
-  }
-  .tl-item .tl-cost {
-    display: inline-block;
-    margin-top: 4px;
-    font-size: 0.85rem;
-    color: var(--accent2);
-    font-weight: 600;
-  }
-
-  /* Stats */
-  .stat-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-    margin: 16px 0;
-  }
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-  }
-  .stat .value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  .stat .label {
-    font-size: 0.8rem;
-    color: var(--text2);
-    margin-top: 4px;
-  }
-
-  /* Callout */
+  /* ---- Callouts ---- */
   .callout {
     background: var(--surface2);
     border-left: 4px solid var(--accent);
@@ -242,7 +171,7 @@
   .callout.warn { border-left-color: var(--warn); }
   .callout.good { border-left-color: var(--accent2); }
 
-  /* Next steps list */
+  /* ---- Steps ---- */
   ol.steps {
     list-style: none;
     counter-reset: step;
@@ -260,10 +189,8 @@
   ol.steps li::before {
     content: counter(step);
     position: absolute;
-    left: 12px;
-    top: 12px;
-    width: 24px;
-    height: 24px;
+    left: 12px; top: 12px;
+    width: 24px; height: 24px;
     background: var(--accent);
     color: #fff;
     border-radius: 6px;
@@ -276,10 +203,22 @@
   ol.steps li .step-title { font-weight: 600; }
   ol.steps li .step-desc { color: var(--text2); font-size: 0.9rem; }
 
-  /* Key-value list */
-  .kv-list { margin: 12px 0; }
-  .kv-list dt { font-weight: 600; font-size: 0.9rem; margin-top: 8px; }
-  .kv-list dd { color: var(--text2); font-size: 0.9rem; margin-left: 0; }
+  /* ---- Stats ---- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat .label { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
 
   .footer {
     text-align: center;
@@ -300,12 +239,11 @@
 </head>
 <body>
 
-<!-- Hero -->
 <div class="hero">
   <h1><span>3D-Printed Housing</span> — Sydney Pilot</h1>
-  <p class="subtitle">Mid-2025 research, vendor analysis, regulatory pathway, and an 18-month executable plan</p>
+  <p class="subtitle">Mid-2025 research, vendor analysis, regulatory pathway, and 18-month executable plan</p>
   <div>
-    <span class="badge accent">BIM-to-Print</span>
+    <span class="badge accent">bim-to-print</span>
     <span class="badge accent2">v0.2.0</span>
     <span class="badge warn">18-month horizon</span>
     <span class="badge">$410k–861k</span>
@@ -314,8 +252,136 @@
 
 <div class="container">
 
-<!-- 1. Executive summary -->
-<h2><span class="num">1</span> The opportunity</h2>
+<!-- ======================================================================= -->
+<!-- VISUAL 1: PIPELINE ARCHITECTURE                                        -->
+<!-- ======================================================================= -->
+<h2><span class="num">1</span> The pipeline — BIM to printed wall</h2>
+<p>How the <code>bim2print</code> pipeline transforms a building model into printer G-code, with the research module feeding every stage.</p>
+
+<div class="viz-box">
+<svg viewBox="0 0 1100 340" xmlns="http://www.w3.org/2000/svg" style="max-width:1100px">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#5b8def"/>
+    </marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#43c9a0"/>
+    </marker>
+    <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#232736"/>
+      <stop offset="100%" stop-color="#1a1d27"/>
+    </linearGradient>
+    <linearGradient id="boxGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#1a1d27"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect x="0" y="0" width="1100" height="340" rx="8" fill="none"/>
+
+  <!-- Row 1: INPUTS -->
+  <text x="50" y="35" fill="#8b92ab" font-size="11" font-weight="600">INPUT</text>
+  <rect x="30" y="45" width="150" height="42" rx="8" fill="#232736" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="60" y="71" fill="#e2e4ed" font-size="13" font-weight="600">IFC File (.ifc)</text>
+  <rect x="30" y="95" width="150" height="42" rx="8" fill="#232736" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="55" y="121" fill="#e2e4ed" font-size="13" font-weight="600">GH JSON (.json)</text>
+
+  <!-- Row 2: PROCESSING -->
+  <text x="270" y="35" fill="#8b92ab" font-size="11" font-weight="600">PROCESSING</text>
+  <rect x="250" y="45" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="275" y="71" fill="#e2e4ed" font-size="12">Reader</text>
+  <rect x="250" y="95" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="275" y="121" fill="#e2e4ed" font-size="12">JSON import</text>
+
+  <rect x="430" y="45" width="120" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="452" y="71" fill="#e2e4ed" font-size="12">Slicer</text>
+  <rect x="430" y="95" width="120" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="452" y="121" fill="#e2e4ed" font-size="12">Slice layers</text>
+
+  <rect x="600" y="45" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="618" y="71" fill="#e2e4ed" font-size="12">Toolpath gen</text>
+  <rect x="600" y="95" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="618" y="121" fill="#e2e4ed" font-size="12">Perim + infill</text>
+
+  <rect x="780" y="45" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="805" y="71" fill="#e2e4ed" font-size="12">G-code writer</text>
+  <rect x="780" y="95" width="130" height="42" rx="8" fill="url(#boxGrad)" stroke="#5b8def" stroke-width="1"/>
+  <text x="805" y="121" fill="#e2e4ed" font-size="12">Marlin output</text>
+
+  <!-- Row 3: OUTPUT -->
+  <text x="960" y="35" fill="#8b92ab" font-size="11" font-weight="600">OUTPUT</text>
+  <rect x="960" y="45" width="110" height="42" rx="8" fill="#1a3a3a" stroke="#43c9a0" stroke-width="1.5"/>
+  <text x="978" y="71" fill="#43c9a0" font-size="13" font-weight="600">.gcode</text>
+  <rect x="960" y="95" width="110" height="42" rx="8" fill="#1a3a3a" stroke="#43c9a0" stroke-width="1.5"/>
+  <text x="978" y="121" fill="#43c9a0" font-size="13" font-weight="600">.gcode</text>
+
+  <!-- Arrows row 1→2 -->
+  <line x1="180" y1="66" x2="248" y2="66" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="180" y1="116" x2="248" y2="116" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Arrows row 2, horizontal chain -->
+  <line x1="380" y1="66" x2="428" y2="66" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="380" y1="116" x2="428" y2="116" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="550" y1="66" x2="598" y2="66" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="550" y1="116" x2="598" y2="116" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="730" y1="66" x2="778" y2="66" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="730" y1="116" x2="778" y2="116" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="910" y1="66" x2="958" y2="66" stroke="#43c9a0" stroke-width="2" marker-end="url(#arrow2)"/>
+  <line x1="910" y1="116" x2="958" y2="116" stroke="#43c9a0" stroke-width="2" marker-end="url(#arrow2)"/>
+
+  <!-- MERGE LINE (IFC + GH feed into pipeline) -->
+  <line x1="105" y1="137" x2="105" y2="170" stroke="#5b8def" stroke-width="1.5"/>
+  <line x1="105" y1="170" x2="310" y2="170" stroke="#5b8def" stroke-width="1.5"/>
+  <line x1="310" y1="137" x2="310" y2="170" stroke="#5b8def" stroke-width="1.5"/>
+  <line x1="310" y1="170" x2="490" y2="170" stroke="#5b8def" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Bottom lane: RESEARCH MODULE feeding into the pipeline -->
+  <rect x="30" y="190" width="1100" height="130" rx="10" fill="#0f141e" stroke="#2d3348" stroke-width="1" stroke-dasharray="6,3"/>
+  <text x="50" y="212" fill="#8b92ab" font-size="11" font-weight="600">RESEARCH MODULE — feeds every stage</text>
+
+  <rect x="40" y="225" width="170" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="60" y="247" fill="#f0c040" font-size="11">Vendor database</text>
+  <rect x="230" y="225" width="170" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="250" y="247" fill="#f0c040" font-size="11">Decision matrix</text>
+  <rect x="420" y="225" width="170" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="440" y="247" fill="#f0c040" font-size="11">Software stack</text>
+  <rect x="610" y="225" width="170" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="630" y="247" fill="#f0c040" font-size="11">Regulatory path</text>
+  <rect x="800" y="225" width="170" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="820" y="247" fill="#f0c040" font-size="11">EoS dossier</text>
+  <rect x="990" y="225" width="120" height="34" rx="6" fill="#1a1a2e" stroke="#f0c040" stroke-width="1"/>
+  <text x="1000" y="247" fill="#f0c040" font-size="11">Financial model</text>
+
+  <!-- Research arrows up -->
+  <line x1="125" y1="220" x2="125" y2="175" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="315" y1="220" x2="315" y2="175" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="505" y1="220" x2="505" y2="175" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="695" y1="220" x2="695" y2="175" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="885" y1="220" x2="885" y2="175" stroke="#f0c040" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Badges -->
+  <rect x="40" y="275" width="80" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="47" y="292" fill="#43c9a0" font-size="10">✅ 25+ tests</text>
+  <rect x="140" y="275" width="90" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="147" y="292" fill="#43c9a0" font-size="10">✅ 56k moves</text>
+  <rect x="250" y="275" width="90" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="257" y="292" fill="#43c9a0" font-size="10">✅ 720 layers</text>
+  <rect x="360" y="275" width="100" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="367" y="292" fill="#43c9a0" font-size="10">✅ 3 profiles</text>
+  <rect x="480" y="275" width="120" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="487" y="292" fill="#43c9a0" font-size="10">✅ Openings tested</text>
+  <rect x="620" y="275" width="130" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="627" y="292" fill="#43c9a0" font-size="10">✅ 11 research docs</text>
+  <rect x="770" y="275" width="150" height="24" rx="4" fill="#1a3a3a"/>
+  <text x="777" y="292" fill="#43c9a0" font-size="10">✅ live at bim2print.…</text>
+</svg>
+</div>
+<div class="viz-caption">The bim2print pipeline: two input paths (IFC &amp; GH JSON), four processing stages, Marlin G-code output. The research module (bottom) informs every decision.</div>
+
+<!-- ======================================================================= -->
+<!-- 2. THE OPPORTUNITY                                                      -->
+<!-- ======================================================================= -->
+<h2><span class="num">2</span> The opportunity</h2>
 
 <div class="stat-row">
   <div class="stat"><div class="value">50,000+</div><div class="label">NSW social housing waitlist</div></div>
@@ -329,129 +395,365 @@ Sydney faces a structural housing deficit that traditional construction cannot a
 </p>
 
 <div class="callout">
-  <strong>First mover advantage:</strong> Australia's first <em>occupied</em> 3D-printed house (Contour3D, Woolooware) is already standing. The NSW Government has established a dedicated unit (Warne Properties) for 3D-printed social housing. The window for a second-mover pilot is narrow.
+  <strong>First mover advantage:</strong> Australia's first <em>occupied</em> 3D-printed house (Contour3D, Woolooware) is already standing. The NSW Government established a dedicated unit (Warne Properties) for 3D-printed social housing. The window for a second-mover pilot is narrow.
 </div>
 
-<!-- 2. Landscape -->
-<h2><span class="num">2</span> Market landscape</h2>
+<!-- ======================================================================= -->
+<!-- 3. COST COMPARISON: VISUAL BAR CHART                                    -->
+<!-- ======================================================================= -->
+<h2><span class="num">3</span> Cost comparison — 3DCP vs traditional</h2>
 
-<div class="card-grid">
-  <div class="card">
-    <h4>📉 Housing undersupply</h4>
-    <p>NSW targets 314,000 new homes by 2029. Greater Sydney alone is <strong>25,000–30,000 dwellings</strong> short per year — a gap that widens as population grows faster than completions.</p>
-  </div>
-  <div class="card">
-    <h4>🏗️ Construction cost crisis</h4>
-    <p>Traditional wall construction costs <strong>$530–1,020/m²</strong> primarily due to formwork and labour. 3DCP wall systems can deliver at <strong>$250–510/m²</strong> — a ~50% reduction with comparable structural performance.</p>
-  </div>
-  <div class="card">
-    <h4>🏛️ Government appetite</h4>
-    <p>The <strong>NSW Warne Properties Unit</strong> is actively piloting 3DCP for social housing. Councils in growth corridors (Liverpool, Camden, Blacktown) need rapid housing solutions and are receptive to innovation.</p>
-  </div>
-  <div class="card">
-    <h4>🧪 Regulatory pathway emerging</h4>
-    <p>No prescriptive NCC standard yet for 3DCP, but the <strong>Evidence-of-Suitability</strong> path under A2G2 is well-established. Labs (ULTRA Labs, RMIT, UTS) now have 3DCP concrete testing capability.</p>
-  </div>
+<div class="viz-box">
+<svg viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
+  <text x="400" y="22" fill="#e2e4ed" font-size="14" font-weight="600" text-anchor="middle">Wall construction cost per m²</text>
+
+  <!-- Bars -->
+  <rect x="80" y="60" width="220" height="36" rx="4" fill="#5b5b7a" opacity="0.6"/>
+  <text x="90" y="84" fill="#e2e4ed" font-size="12" font-weight="600">Traditional</text>
+  <text x="260" y="84" fill="#e05a5a" font-size="12" font-weight="600" text-anchor="end">$530–1,020/m²</text>
+
+  <rect x="80" y="110" width="220" height="36" rx="4" fill="#43c9a0"/>
+  <text x="90" y="134" fill="#e2e4ed" font-size="12" font-weight="600">3DCP wall system</text>
+  <text x="260" y="134" fill="#43c9a0" font-size="12" font-weight="600" text-anchor="end">$250–510/m²</text>
+
+  <text x="80" y="170" fill="#8b92ab" font-size="11">Savings: $280/m² (wall system only)</text>
+
+  <!-- Cost breakdown table -->
+  <text x="80" y="200" fill="#e2e4ed" font-size="13" font-weight="600">Cost breakdown per m² wall</text>
+
+  <line x1="80" y1="210" x2="720" y2="210" stroke="#2d3348" stroke-width="1"/>
+  <text x="90" y="228" fill="#8b92ab" font-size="11">Category</text>
+  <text x="300" y="228" fill="#8b92ab" font-size="11" text-anchor="end">Traditional</text>
+  <text x="420" y="228" fill="#8b92ab" font-size="11" text-anchor="end">3DCP</text>
+  <text x="540" y="228" fill="#8b92ab" font-size="11" text-anchor="end">Delta</text>
+
+  <line x1="80" y1="234" x2="720" y2="234" stroke="#2d3348" stroke-width="1"/>
+
+  <text x="90" y="252" fill="#e2e4ed" font-size="11">Formwork</text>
+  <text x="300" y="252" fill="#e05a5a" font-size="11" text-anchor="end">$150–300</text>
+  <text x="420" y="252" fill="#43c9a0" font-size="11" text-anchor="end">$0</text>
+  <text x="540" y="252" fill="#43c9a0" font-size="11" text-anchor="end">−100%</text>
+
+  <text x="90" y="270" fill="#e2e4ed" font-size="11">Reinforcement</text>
+  <text x="300" y="270" fill="#e05a5a" font-size="11" text-anchor="end">$80–120</text>
+  <text x="420" y="270" fill="#43c9a0" font-size="11" text-anchor="end">$30–60</text>
+  <text x="540" y="270" fill="#43c9a0" font-size="11" text-anchor="end">−50%</text>
+
+  <text x="90" y="288" fill="#e2e4ed" font-size="11">Concrete materials</text>
+  <text x="300" y="288" fill="#e05a5a" font-size="11" text-anchor="end">$100–200</text>
+  <text x="420" y="288" fill="#f0c040" font-size="11" text-anchor="end">$120–250</text>
+  <text x="540" y="288" fill="#f0c040" font-size="11" text-anchor="end">+20%</text>
+
+  <text x="90" y="306" fill="#e2e4ed" font-size="11">Labour (pour/finish)</text>
+  <text x="300" y="306" fill="#e05a5a" font-size="11" text-anchor="end">$200–400</text>
+  <text x="420" y="306" fill="#43c9a0" font-size="11" text-anchor="end">$50–100</text>
+  <text x="540" y="306" fill="#43c9a0" font-size="11" text-anchor="end">−75%</text>
+</svg>
 </div>
+<div class="viz-caption">3DCP roughly halves wall construction cost. Full house cost includes foundations, roof, services, fit-out — 3DCP primarily impacts the superstructure envelope.</div>
 
-<!-- 3. Vendors -->
-<h2><span class="num">3</span> Printer vendors</h2>
+<!-- ======================================================================= -->
+<!-- 4. VENDORS + DECISION MATRIX VISUAL                                     -->
+<!-- ======================================================================= -->
+<h2><span class="num">4</span> Printer vendors</h2>
 
 <table>
-  <thead>
-    <tr>
-      <th>Vendor</th>
-      <th>Type</th>
-      <th>Envelope</th>
-      <th>Speed</th>
-      <th>Price</th>
-      <th>Model</th>
-    </tr>
-  </thead>
+  <thead><tr><th>Vendor</th><th>Type</th><th>Envelope</th><th>Speed</th><th>Price</th><th>Model</th></tr></thead>
   <tbody>
-    <tr>
-      <td><strong>Contour3D</strong> 🇦🇺</td>
-      <td>Proprietary gantry</td>
-      <td>2‑bedroom scale</td>
-      <td>N/D</td>
-      <td class="price">Service model</td>
-      <td><span class="tag partner">Partner</span></td>
-    </tr>
-    <tr>
-      <td><strong>Luyten 3D</strong> 🇦🇺</td>
-      <td>Gantry</td>
-      <td>1.5×1.5×100 m</td>
-      <td>60–70% faster</td>
-      <td class="price">$300–500k</td>
-      <td><span class="tag buy">Buy</span></td>
-    </tr>
-    <tr>
-      <td><strong>CyBe</strong> 🇳🇱</td>
-      <td>Robot arm</td>
-      <td>~2–3 m radius</td>
-      <td>Moderate</td>
-      <td class="price">~€49k ($80k)</td>
-      <td><span class="tag rd">R&amp;D</span></td>
-    </tr>
-    <tr>
-      <td><strong>PaCompatible</strong> 🇦🇺</td>
-      <td>Mobile gantry</td>
-      <td>Truck-deployable</td>
-      <td>250 mm/s</td>
-      <td class="price">$519k</td>
-      <td><span class="tag buy">Buy</span></td>
-    </tr>
+    <tr><td><strong>Contour3D</strong> 🇦🇺</td><td>Proprietary gantry</td><td>2‑bedroom scale</td><td>N/D</td><td class="price">Service model</td><td><span class="tag partner">Partner</span></td></tr>
+    <tr><td><strong>Luyten 3D</strong> 🇦🇺</td><td>Gantry</td><td>1.5×1.5×100 m</td><td>60–70% faster</td><td class="price">$300–500k</td><td><span class="tag buy">Buy</span></td></tr>
+    <tr><td><strong>CyBe</strong> 🇳🇱</td><td>Robot arm</td><td>~2–3 m radius</td><td>Moderate</td><td class="price">~€49k ($80k)</td><td><span class="tag rd">R&amp;D</span></td></tr>
+    <tr><td><strong>PaCompatible</strong> 🇦🇺</td><td>Mobile gantry</td><td>Truck-deployable</td><td>250 mm/s</td><td class="price">$519k</td><td><span class="tag buy">Buy</span></td></tr>
   </tbody>
 </table>
 
-<h3>Decision matrix — weighted scoring</h3>
+<!-- Decision matrix bar chart -->
+<h3>Decision matrix — weighted scores</h3>
+
+<div class="viz-box">
+<svg viewBox="0 0 800 340" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
+  <text x="400" y="22" fill="#e2e4ed" font-size="14" font-weight="600" text-anchor="middle">Weighted decision score (out of 5.0)</text>
+
+  <!-- Grid lines -->
+  <line x1="200" y1="50" x2="200" y2="320" stroke="#2d3348" stroke-width="1"/>
+  <line x1="320" y1="50" x2="320" y2="320" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="440" y1="50" x2="440" y2="320" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="560" y1="50" x2="560" y2="320" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="680" y1="50" x2="680" y2="320" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
+  <line x1="800" y1="50" x2="800" y2="320" stroke="#2d3348" stroke-width="1"/>
+
+  <text x="200" y="48" fill="#8b92ab" font-size="10" text-anchor="middle">0</text>
+  <text x="320" y="48" fill="#8b92ab" font-size="10" text-anchor="middle">1.25</text>
+  <text x="440" y="48" fill="#8b92ab" font-size="10" text-anchor="middle">2.5</text>
+  <text x="560" y="48" fill="#8b92ab" font-size="10" text-anchor="middle">3.75</text>
+  <text x="680" y="48" fill="#8b92ab" font-size="10" text-anchor="middle">5.0</text>
+
+  <!-- Contour3D bar -->
+  <rect x="200" y="65" width="471" height="40" rx="4" fill="#43c9a0"/>
+  <rect x="200" y="65" width="471" height="40" rx="4" fill="none" stroke="#43c9a0" stroke-width="1"/>
+  <text x="210" y="91" fill="#0f1117" font-size="13" font-weight="700">🥇 Contour3D — 4.70</text>
+  <text x="630" y="91" fill="#0f1117" font-size="11" font-weight="600" text-anchor="end">Partner + social housing precedent</text>
+
+  <!-- Luyten bar -->
+  <rect x="200" y="120" width="385" height="40" rx="4" fill="#5b8def"/>
+  <text x="210" y="146" fill="#e2e4ed" font-size="13" font-weight="600">🥈 Luyten 3D — 3.85</text>
+  <text x="555" y="146" fill="#e2e4ed" font-size="11" text-anchor="end">$300–500k gantry</text>
+
+  <!-- CyBe bar -->
+  <rect x="200" y="175" width="335" height="40" rx="4" fill="#5b5b7a"/>
+  <text x="210" y="201" fill="#e2e4ed" font-size="13" font-weight="600">🥉 CyBe — 3.35</text>
+  <text x="508" y="201" fill="#e2e4ed" font-size="11" text-anchor="end">€49k R&amp;D printer</text>
+
+  <!-- PaCompatible bar -->
+  <rect x="200" y="230" width="295" height="40" rx="4" fill="#5b5b7a" opacity="0.5"/>
+  <text x="210" y="256" fill="#8b92ab" font-size="13" font-weight="600">PaCompatible — 2.95</text>
+  <text x="475" y="256" fill="#8b92ab" font-size="11" text-anchor="end">$519k mobile gantry</text>
+
+  <!-- Criteria weights legend -->
+  <text x="400" y="310" fill="#8b92ab" font-size="11" text-anchor="middle">Weights: AU availability 25% · Reg precedent 20% · Envelope 15% · Cost 15% · Speed 10% · Material 10% · Support 5%</text>
+</svg>
+</div>
+<div class="viz-caption">Contour3D leads on local availability, regulatory precedent (occupied house exists), and zero-capex partnership model.</div>
+
+<div class="callout good">
+  <strong>Recommended approach:</strong> Partner with <strong>Contour3D</strong> for the pilot (zero capex, existing compliance path, local Sydney operator). Acquire a <strong>CyBe</strong> (€49k) as an in-house R&amp;D printer for mix trials. Scale with <strong>Luyten</strong> gantry at production volume.
+</div>
+
+<!-- ======================================================================= -->
+<!-- VISUAL: STRATEGIC POSITIONING                                           -->
+<!-- ======================================================================= -->
+<h2><span class="num">5</span> Strategic positioning</h2>
+
+<div class="viz-box">
+<svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" style="max-width:700px">
+  <!-- Axes -->
+  <line x1="80" y1="60" x2="80" y2="340" stroke="#e2e4ed" stroke-width="2"/>
+  <line x1="80" y1="340" x2="660" y2="340" stroke="#e2e4ed" stroke-width="2"/>
+
+  <text x="80" y="30" fill="#8b92ab" font-size="11" text-anchor="middle" transform="rotate(-90,80,30)">Regulatory barrier</text>
+  <text x="370" y="370" fill="#8b92ab" font-size="11" text-anchor="middle">Construction capability &amp; speed</text>
+
+  <!-- Axis labels -->
+  <text x="82" y="80" fill="#f0c040" font-size="10">High</text>
+  <text x="82" y="335" fill="#43c9a0" font-size="10">Low</text>
+  <text x="85" y="345" fill="#e2e4ed" font-size="10">Low</text>
+  <text x="645" y="345" fill="#e2e4ed" font-size="10">High</text>
+
+  <!-- Quadrant zones -->
+  <rect x="81" y="60" width="290" height="140" fill="#3a2a2a" opacity="0.15" rx="4"/>
+  <text x="225" y="135" fill="#8b92ab" font-size="10" text-anchor="middle" opacity="0.5">HIGH BARRIER · LOW CAPABILITY</text>
+  <rect x="371" y="60" width="289" height="140" fill="#2a3a2a" opacity="0.15" rx="4"/>
+  <text x="515" y="135" fill="#8b92ab" font-size="10" text-anchor="middle" opacity="0.5">HIGH BARRIER · HIGH CAPABILITY</text>
+  <rect x="81" y="200" width="290" height="140" fill="#1a1a2e" opacity="0.15" rx="4"/>
+  <text x="225" y="275" fill="#8b92ab" font-size="10" text-anchor="middle" opacity="0.5">LOW BARRIER · LOW CAPABILITY</text>
+  <rect x="371" y="200" width="289" height="140" fill="#1a2a2a" opacity="0.15" rx="4"/>
+  <text x="515" y="275" fill="#8b92ab" font-size="10" text-anchor="middle" opacity="0.5">LOW BARRIER · HIGH CAPABILITY</text>
+
+  <!-- Traditional builders dot -->
+  <circle cx="160" cy="310" r="40" fill="none" stroke="#e05a5a" stroke-width="2" stroke-dasharray="4,3"/>
+  <text x="160" y="305" fill="#e05a5a" font-size="11" text-anchor="middle">Traditional</text>
+  <text x="160" y="320" fill="#e05a5a" font-size="10" text-anchor="middle">builders</text>
+  <text x="160" y="335" fill="#8b92ab" font-size="9" text-anchor="middle">(slow, expensive)</text>
+
+  <!-- 3DCP competitors dot -->
+  <circle cx="480" cy="230" r="40" fill="none" stroke="#f0c040" stroke-width="2" stroke-dasharray="4,3"/>
+  <text x="480" y="218" fill="#f0c040" font-size="11" text-anchor="middle">3DCP</text>
+  <text x="480" y="233" fill="#f0c040" font-size="10" text-anchor="middle">competitors</text>
+  <text x="480" y="248" fill="#8b92ab" font-size="9" text-anchor="middle">(Contour3D, Luyten)</text>
+
+  <!-- OUR position -->
+  <circle cx="530" cy="280" r="22" fill="#43c9a0" opacity="0.3"/>
+  <circle cx="530" cy="280" r="8" fill="#43c9a0"/>
+  <text x="530" y="268" fill="#43c9a0" font-size="12" font-weight="700" text-anchor="middle">★</text>
+  <text x="530" y="320" fill="#43c9a0" font-size="11" font-weight="600" text-anchor="middle">US</text>
+
+  <!-- Our value prop box -->
+  <rect x="40" y="30" width="620" height="24" rx="4" fill="none" stroke="#43c9a0" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="350" y="46" fill="#43c9a0" font-size="11" text-anchor="middle">Our opportunity: Be the software + compliance layer that de-risks 3DCP for builders and councils</text>
+
+  <!-- Arrow showing the path -->
+  <path d="M 200 300 Q 350 280, 520 280" fill="none" stroke="#43c9a0" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow2)"/>
+</svg>
+</div>
+<div class="viz-caption">bim-to-print's unique position: de-risk 3DCP through the software + compliance layer, bridging builders and councils.</div>
+
+<!-- ======================================================================= -->
+<!-- VISUAL: 18-MONTH GANTT TIMELINE                                         -->
+<!-- ======================================================================= -->
+<h2><span class="num">6</span> 18-month execution plan</h2>
+
+<div class="viz-box">
+<svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg" style="max-width:1000px">
+  <text x="500" y="22" fill="#e2e4ed" font-size="14" font-weight="600" text-anchor="middle">Gantt chart — 18-month pilot (Contour3D scenario)</text>
+
+  <!-- Month headers -->
+  <script type="text/javascript">
+    // Abusing text nodes since this is static SVG
+  </script>
+  <text x="280" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M1</text>
+  <text x="305" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M2</text>
+  <text x="330" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M3</text>
+  <text x="355" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M4</text>
+  <text x="380" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M5</text>
+  <text x="405" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M6</text>
+  <text x="430" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M7</text>
+  <text x="455" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M8</text>
+  <text x="480" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M9</text>
+  <text x="505" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M10</text>
+  <text x="530" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M11</text>
+  <text x="555" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M12</text>
+  <text x="580" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M13</text>
+  <text x="605" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M14</text>
+  <text x="630" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M15</text>
+  <text x="655" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M16</text>
+  <text x="680" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M17</text>
+  <text x="705" y="45" fill="#8b92ab" font-size="9" text-anchor="middle">M18</text>
+
+  <!-- Month grid lines -->
+  <line x1="270" y1="50" x2="270" y2="360" stroke="#1a1d27" stroke-width="1"/>
+  <line x1="295" y1="50" x2="295" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="320" y1="50" x2="320" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="345" y1="50" x2="345" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="370" y1="50" x2="370" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="395" y1="50" x2="395" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="420" y1="50" x2="420" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="445" y1="50" x2="445" y2="360" stroke="#2d3348" stroke-width="1"/>
+  <line x1="470" y1="50" x2="470" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="495" y1="50" x2="495" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="520" y1="50" x2="520" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="545" y1="50" x2="545" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="570" y1="50" x2="570" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="595" y1="50" x2="595" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="620" y1="50" x2="620" y2="360" stroke="#2d3348" stroke-width="1"/>
+  <line x1="645" y1="50" x2="645" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="670" y1="50" x2="670" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="695" y1="50" x2="695" y2="360" stroke="#2d3348" stroke-width="0.5"/>
+  <line x1="720" y1="50" x2="720" y2="360" stroke="#2d3348" stroke-width="1"/>
+
+  <!-- Phase 0: Research & validation -->
+  <rect x="50" y="65" width="210" height="40" rx="6" fill="none" stroke="#f0c040" stroke-width="1"/>
+  <text x="60" y="80" fill="#f0c040" font-size="11" font-weight="600">Phase 0: Research</text>
+  <text x="60" y="95" fill="#8b92ab" font-size="10">$10k–26k</text>
+  <rect x="270" y="68" width="100" height="34" rx="4" fill="#f0c040" opacity="0.85"/>
+  <text x="310" y="90" fill="#0f1117" font-size="10" font-weight="600" text-anchor="middle">M0–M4</text>
+
+  <!-- Phase 1: Design & compliance -->
+  <rect x="50" y="115" width="210" height="40" rx="6" fill="none" stroke="#5b8def" stroke-width="1"/>
+  <text x="60" y="130" fill="#5b8def" font-size="11" font-weight="600">Phase 1: Design</text>
+  <text x="60" y="145" fill="#8b92ab" font-size="10">$40k–75k</text>
+  <rect x="320" y="118" width="150" height="34" rx="4" fill="#5b8def" opacity="0.85"/>
+  <text x="385" y="140" fill="#e2e4ed" font-size="10" font-weight="600" text-anchor="middle">M3–M8</text>
+
+  <!-- Phase 2: Procurement & site prep -->
+  <rect x="50" y="165" width="210" height="40" rx="6" fill="none" stroke="#43c9a0" stroke-width="1"/>
+  <text x="60" y="180" fill="#43c9a0" font-size="11" font-weight="600">Phase 2: Procurement</text>
+  <text x="60" y="195" fill="#8b92ab" font-size="10">$100k–240k</text>
+  <rect x="395" y="168" width="150" height="34" rx="4" fill="#43c9a0" opacity="0.85"/>
+  <text x="460" y="190" fill="#0f1117" font-size="10" font-weight="600" text-anchor="middle">M6–M10</text>
+
+  <!-- Phase 3: Print & monitor -->
+  <rect x="50" y="215" width="210" height="40" rx="6" fill="none" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="60" y="230" fill="#8b5cf6" font-size="11" font-weight="600">Phase 3: Print</text>
+  <text x="60" y="245" fill="#8b92ab" font-size="10">$100k–250k</text>
+  <rect x="470" y="218" width="150" height="34" rx="4" fill="#8b5cf6" opacity="0.85"/>
+  <text x="535" y="240" fill="#e2e4ed" font-size="10" font-weight="600" text-anchor="middle">M10–M14</text>
+
+  <!-- Phase 4: Fit-out & commission -->
+  <rect x="50" y="265" width="210" height="40" rx="6" fill="none" stroke="#e05a5a" stroke-width="1"/>
+  <text x="60" y="280" fill="#e05a5a" font-size="11" font-weight="600">Phase 4: Fit-out</text>
+  <text x="60" y="295" fill="#8b92ab" font-size="10">$150k–250k</text>
+  <rect x="545" y="268" width="150" height="34" rx="4" fill="#e05a5a" opacity="0.85"/>
+  <text x="610" y="290" fill="#e2e4ed" font-size="10" font-weight="600" text-anchor="middle">M12–M17</text>
+
+  <!-- Milestone diamonds -->
+  <polygon points="270,48 278,56 270,64 262,56" fill="#f0c040"/>
+  <text x="260" y="36" fill="#f0c040" font-size="8" text-anchor="end">Decision matrix</text>
+
+  <polygon points="445,48 453,56 445,64 437,56" fill="#5b8def"/>
+  <text x="435" y="36" fill="#5b8def" font-size="8" text-anchor="end">DA submitted</text>
+
+  <polygon points="520,48 528,56 520,64 512,56" fill="#5b8def"/>
+  <text x="510" y="36" fill="#5b8def" font-size="8" text-anchor="end">CC granted</text>
+
+  <polygon points="620,48 628,56 620,64 612,56" fill="#8b5cf6"/>
+  <text x="610" y="36" fill="#8b5cf6" font-size="8" text-anchor="end">Print start</text>
+
+  <polygon points="695,48 703,56 695,64 687,56" fill="#e05a5a"/>
+  <text x="685" y="36" fill="#e05a5a" font-size="8" text-anchor="end">OC granted</text>
+
+  <!-- Key deliverables on right -->
+  <text x="770" y="85" fill="#f0c040" font-size="10">✓ Decision matrix</text>
+  <text x="770" y="100" fill="#f0c040" font-size="10">✓ Test reports</text>
+  <text x="770" y="135" fill="#5b8def" font-size="10">✓ BIM model</text>
+  <text x="770" y="150" fill="#5b8def" font-size="10">✓ DA + CC</text>
+  <text x="770" y="185" fill="#43c9a0" font-size="10">✓ Printer ready</text>
+  <text x="770" y="200" fill="#43c9a0" font-size="10">✓ Site ready</text>
+  <text x="770" y="235" fill="#8b5cf6" font-size="10">✓ Walls complete</text>
+  <text x="770" y="250" fill="#8b5cf6" font-size="10">✓ QA reports</text>
+  <text x="770" y="285" fill="#e05a5a" font-size="10">✓ OC granted</text>
+
+  <!-- Total bar -->
+  <rect x="50" y="330" width="670" height="20" rx="4" fill="#1a1d27" stroke="#2d3348" stroke-width="1"/>
+  <text x="385" y="344" fill="#8b92ab" font-size="10" text-anchor="middle">Total: 18 months · $410k–861k (Contour3D scenario)</text>
+</svg>
+</div>
+<div class="viz-caption">Five phases from research to occupation. Milestones: decision matrix (M0), DA (M6), CC (M8), print start (M10), OC (M17).</div>
+
+<!-- ======================================================================= -->
+<!-- 7. BUDGET COMPARISON VISUAL                                              -->
+<!-- ======================================================================= -->
+<h2><span class="num">7</span> Budget comparison</h2>
+
+<div class="viz-box">
+<svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" style="max-width:800px">
+  <text x="400" y="22" fill="#e2e4ed" font-size="14" font-weight="600" text-anchor="middle">Total budget by scenario (with 20% contingency)</text>
+
+  <!-- Contour3D bar -->
+  <rect x="80" y="50" width="160" height="180" rx="8" fill="#1a3a3a" stroke="#43c9a0" stroke-width="1.5"/>
+  <text x="160" y="170" fill="#43c9a0" font-size="14" font-weight="700" text-anchor="middle">$434k</text>
+  <text x="160" y="190" fill="#43c9a0" font-size="11" text-anchor="middle">$623k</text>
+  <rect x="95" y="230" width="130" height="24" rx="4" fill="#43c9a0"/>
+  <text x="160" y="247" fill="#0f1117" font-size="11" font-weight="700" text-anchor="middle">Contour3D</text>
+
+  <!-- CyBe bar -->
+  <rect x="320" y="40" width="160" height="190" rx="8" fill="#1a1a2e" stroke="#5b8def" stroke-width="1.5"/>
+  <text x="400" y="160" fill="#5b8def" font-size="14" font-weight="700" text-anchor="middle">$554k</text>
+  <text x="400" y="180" fill="#5b8def" font-size="11" text-anchor="middle">$767k</text>
+  <rect x="335" y="230" width="130" height="24" rx="4" fill="#5b8def"/>
+  <text x="400" y="247" fill="#e2e4ed" font-size="11" font-weight="700" text-anchor="middle">CyBe</text>
+
+  <!-- Luyten bar -->
+  <rect x="560" y="15" width="160" height="215" rx="8" fill="#2a1a1a" stroke="#e05a5a" stroke-width="1.5"/>
+  <text x="640" y="150" fill="#e05a5a" font-size="14" font-weight="700" text-anchor="middle">$848k</text>
+  <text x="640" y="170" fill="#e05a5a" font-size="11" text-anchor="middle">$1,337k</text>
+  <rect x="575" y="230" width="130" height="24" rx="4" fill="#e05a5a"/>
+  <text x="640" y="247" fill="#e2e4ed" font-size="11" font-weight="700" text-anchor="middle">Luyten</text>
+
+  <!-- Break-even line -->
+  <line x1="60" y1="275" x2="740" y2="275" stroke="#2d3348" stroke-width="1"/>
+  <text x="400" y="295" fill="#8b92ab" font-size="11" text-anchor="middle">Break-even: CyBe @ 5–6 dwellings · Luyten @ 18–30 dwellings ($280/m² wall savings)</text>
+</svg>
+</div>
 
 <table>
-  <thead>
-    <tr>
-      <th>Vendor</th>
-      <th>AU avail <span style="color:var(--text2);font-weight:400">(25%)</span></th>
-      <th>Reg precedent <span style="color:var(--text2);font-weight:400">(20%)</span></th>
-      <th>Envelope <span style="color:var(--text2);font-weight:400">(15%)</span></th>
-      <th>Speed <span style="color:var(--text2);font-weight:400">(10%)</span></th>
-      <th>Cost <span style="color:var(--text2);font-weight:400">(15%)</span></th>
-      <th>Material <span style="color:var(--text2);font-weight:400">(10%)</span></th>
-      <th>Support <span style="color:var(--text2);font-weight:400">(5%)</span></th>
-      <th><strong>Score</strong></th>
-    </tr>
-  </thead>
+  <thead><tr><th>Scenario</th><th>Printer</th><th>Labour</th><th>Fit-out</th><th>Testing</th><th>Subtotal</th><th>+20% contingency</th></tr></thead>
   <tbody>
     <tr style="background:var(--surface)">
-      <td><strong>🥇 Contour3D</strong></td>
-      <td>5</td><td>5</td><td>4</td><td>3</td><td>5</td><td>5</td><td>5</td>
-      <td><strong style="color:var(--accent2);font-size:1.1rem">4.70</strong></td>
-    </tr>
-    <tr>
-      <td><strong>🥈 Luyten</strong></td>
-      <td>5</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td>
-      <td><strong style="color:var(--accent)">3.85</strong></td>
-    </tr>
-    <tr>
-      <td><strong>🥉 CyBe</strong></td>
-      <td>4</td><td>2</td><td>2</td><td>3</td><td>5</td><td>4</td><td>3</td>
-      <td><strong>3.35</strong></td>
-    </tr>
-    <tr>
-      <td><strong>PaCompatible</strong></td>
-      <td>3</td><td>2</td><td>3</td><td>5</td><td>2</td><td>3</td><td>3</td>
-      <td><strong>2.95</strong></td>
-    </tr>
+      <td><strong>Pilot w/ Contour3D</strong></td><td>$0</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td><strong>$362–519k</strong></td><td><strong>$434–623k</strong></td></tr>
+    <tr><td><strong>Pilot w/ CyBe</strong></td><td>$100–120k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td><strong>$462–639k</strong></td><td><strong>$554–767k</strong></td></tr>
+    <tr><td><strong>Pilot w/ Luyten</strong></td><td>$345–595k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td><strong>$707–1,114k</strong></td><td><strong>$848–1,337k</strong></td></tr>
   </tbody>
 </table>
 
 <div class="callout good">
-  <strong>Recommended:</strong> Partner with <strong>Contour3D</strong> for the pilot (zero capex, existing compliance path, local Sydney operator). Acquire a <strong>CyBe</strong> (€49k) as an in‑house R&amp;D printer for mix trials. Scale with <strong>Luyten</strong> gantry at production volume.
+  <strong>Break-even (CyBe):</strong> At $280/m² savings vs traditional wall construction, the €49k printer pays for itself after 357–429 m² of printed wall — approximately 5–6 dwellings. Luyten needs 18–30 dwellings.
 </div>
 
-<!-- 4. Regulatory -->
-<h2><span class="num">4</span> Regulatory pathway</h2>
-
-<p>3DCP qualifies as a <strong>Performance Solution</strong> under NCC A2G2 since no Deemed‑to‑Satisfy provision exists yet. The path is well-defined:</p>
+<!-- ======================================================================= -->
+<!-- 8. REGULATORY PATHWAY                                                   -->
+<!-- ======================================================================= -->
+<h2><span class="num">8</span> Regulatory pathway</h2>
+<p>3DCP qualifies as a <strong>Performance Solution</strong> under NCC A2G2. No Deemed‑to‑Satisfy provision exists yet, so the path is well-defined through an Evidence-of-Suitability dossier.</p>
 
 <ol class="steps">
   <li>
@@ -464,116 +766,26 @@ Sydney faces a structural housing deficit that traditional construction cannot a
   </li>
   <li>
     <div class="step-title">Compile Evidence-of-Suitability dossier</div>
-    <div class="step-desc">Structure the dossier per the template in our research module: project description → performance matrix → test reports → structural engineer certificate → G‑code spec → QA plan.</div>
+    <div class="step-desc">Structure the dossier per the template: project description → performance matrix → test reports → structural engineer certificate → G‑code spec → QA plan.</div>
   </li>
   <li>
     <div class="step-title">Engage a certifier early</div>
-    <div class="step-desc">Pre-engagement by Month 2. Warne Properties Unit can recommend certifiers who've assessed 3DCP. Do not design to DTS and hope — involve certifier at design stage.</div>
+    <div class="step-desc">Pre-engagement by Month 2. Warne Properties Unit can recommend certifiers who've assessed 3DCP. Involve certifier at design stage — don't design to DTS and hope.</div>
   </li>
   <li>
     <div class="step-title">Obtain Construction Certificate + Occupation Certificate</div>
-    <div class="step-desc">DA (Month 6–10) → CC (Month 10–12) → Print with in-process inspection → OC (Month 16–18).</div>
+    <div class="step-desc">DA (Month 6–10) → CC (Month 10–12) → Print with in‑process inspection → OC (Month 16–18).</div>
   </li>
 </ol>
 
 <div class="callout warn">
-  <strong>Key risk:</strong> Certifier hesitancy due to novelty. Mitigate by leveraging Warne Properties' existing 3DCP work and by preparing the full EoS dossier before submitting the CC application.
+  <strong>Key risk:</strong> Certifier hesitancy due to novelty. Mitigate by leveraging Warne Properties' existing 3DCP work and preparing the full EoS dossier before submitting the CC application.
 </div>
 
-<!-- 5. Timeline -->
-<h2><span class="num">5</span> 18-month execution plan</h2>
-
-<div class="timeline">
-  <div class="tl-item phase0">
-    <div class="tl-date">Months 0–4 · $10k–26k</div>
-    <div class="tl-title">Phase 0 — Research &amp; validation</div>
-    <div class="tl-desc">
-      Shortlist vendors · Contact Contour3D, CyBe, Luyten · Concrete mix proposals from 2–3 suppliers · ULTRA Labs structural testing (28‑day cure) · Engage certifier · Calibrate bim2print settings
-    </div>
-    <div class="tl-cost">Deliverable: Decision matrix + test reports</div>
-  </div>
-
-  <div class="tl-item phase1">
-    <div class="tl-date">Months 3–8 · $40k–75k</div>
-    <div class="tl-title">Phase 1 — Design &amp; compliance</div>
-    <div class="tl-desc">
-      70 m² 2‑bedroom BIM model (IFC) · DA submission to council · EoS dossier compilation · Fire resistance test (FRL) · Structural engineer certificate · Certifier review → Construction Certificate
-    </div>
-    <div class="tl-cost">Deliverable: CC granted + DA approved</div>
-  </div>
-
-  <div class="tl-item phase2">
-    <div class="tl-date">Months 6–10 · $100k–240k</div>
-    <div class="tl-title">Phase 2 — Procurement &amp; site prep</div>
-    <div class="tl-desc">
-      Finalise printer partnership · Site selection + lease · Concrete mix qualification · Site prep (pad, utilities, access) · Printer delivery + commissioning + test print
-    </div>
-    <div class="tl-cost">Deliverable: Site + printer ready</div>
-  </div>
-
-  <div class="tl-item phase3">
-    <div class="tl-date">Months 10–14 · $100k–250k</div>
-    <div class="tl-title">Phase 3 — Print &amp; monitor</div>
-    <div class="tl-desc">
-      Generate G‑code from BIM via bim2print · Pre‑print certifier inspection · Wall printing (2–4 months) · In‑process QA (layer adhesion, dimensions) · Post‑print core sampling + structural check
-    </div>
-    <div class="tl-cost">Deliverable: Completed wall system</div>
-  </div>
-
-  <div class="tl-item phase4">
-    <div class="tl-date">Months 12–17 · $150k–250k</div>
-    <div class="tl-title">Phase 4 — Fit-out &amp; commission</div>
-    <div class="tl-desc">
-      Roof structure · MEP rough‑in · Interior finishes (render, paint, floors) · Exterior finishing · Final inspection → Occupation Certificate
-    </div>
-    <div class="tl-cost">Deliverable: OC granted</div>
-  </div>
-</div>
-
-<!-- 6. Budget -->
-<h2><span class="num">6</span> Budget comparison</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Scenario</th>
-      <th>Printer</th>
-      <th>Labour</th>
-      <th>Fit-out</th>
-      <th>Testing</th>
-      <th>Site</th>
-      <th>Subtotal</th>
-      <th>+20% contingency</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="background:var(--surface)">
-      <td><strong>Pilot w/ Contour3D</strong></td>
-      <td>$0</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
-      <td><strong>$362–519k</strong></td>
-      <td><strong>$434–623k</strong></td>
-    </tr>
-    <tr>
-      <td><strong>Pilot w/ CyBe</strong></td>
-      <td>$100–120k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
-      <td><strong>$462–639k</strong></td>
-      <td><strong>$554–767k</strong></td>
-    </tr>
-    <tr>
-      <td><strong>Pilot w/ Luyten</strong></td>
-      <td>$345–595k</td><td>$278–358k</td><td>$70–125k</td><td>$14–36k</td><td>$0</td>
-      <td><strong>$707–1,114k</strong></td>
-      <td><strong>$848–1,337k</strong></td>
-    </tr>
-  </tbody>
-</table>
-
-<div class="callout good">
-  <strong>Break-even (CyBe):</strong> At $280/m² savings vs traditional wall construction, the €49k printer pays for itself after 357–429 m² of printed wall — approximately 5–6 dwellings.
-</div>
-
-<!-- 7. Next steps -->
-<h2><span class="num">7</span> Immediate action plan</h2>
+<!-- ======================================================================= -->
+<!-- 9. IMMEDIATE ACTION PLAN                                                -->
+<!-- ======================================================================= -->
+<h2><span class="num">9</span> Immediate action plan</h2>
 
 <ol class="steps">
   <li>
@@ -586,26 +798,25 @@ Sydney faces a structural housing deficit that traditional construction cannot a
   </li>
   <li>
     <div class="step-title">Engage ULTRA Labs for test quotes</div>
-    <div class="step-desc">Request a quote for the full EoS test suite: compressive strength, bond strength, FRL, water penetration, thermal conductivity, sound insulation. Budget $8,800–21,000.</div>
+    <div class="step-desc">Request a quote for the full EoS test suite: compressive, bond, FRL, water penetration, thermal, sound. Budget $8,800–21,000.</div>
   </li>
   <li>
     <div class="step-title">Contact Warne Properties Unit</div>
-    <div class="step-desc">Cold outreach through NSW Planning — they can provide compliance pathway guidance and certifier recommendations based on their existing 3DP social housing pilot.</div>
+    <div class="step-desc">NSW Planning — they can provide compliance pathway guidance and certifier recommendations based on their existing 3DP social housing pilot.</div>
   </li>
   <li>
     <div class="step-title">Prepare grant application</div>
-    <div class="step-desc">Target the NSW Affordable Housing Innovation Fund ($50k–500k) and NSW Building Innovation Fund ($100k–1M). Use the <a href="grant-proposal-template.md">grant proposal template</a> in our docs.</div>
+    <div class="step-desc">Target NSW Affordable Housing Innovation Fund ($50k–500k) and NSW Building Innovation Fund ($100k–1M). Template available in <a href="grant-proposal-template.md" style="color:var(--accent)">grant-proposal-template.md</a>.</div>
   </li>
   <li>
     <div class="step-title">Generate pilot G-code from BIM model</div>
-    <div class="step-desc">Once the design is ready, run it through <code>bim2print</code>. The pipeline already handles walls with openings, columns, and multiple profiles — exactly what you need for a 70 m² dwelling.</div>
+    <div class="step-desc">Once the design is ready, run it through <code>bim2print</code>. The pipeline already handles walls with openings, columns, and multiple profiles — verified with 720 layers, 56k moves, 3 profiles.</div>
   </li>
 </ol>
 
-<!-- Footer -->
 <div class="footer">
   <p><strong>bim-to-print</strong> · <a href="https://github.com/ChonSong/bim-to-print">ChonSong/bim-to-print</a> · v0.2.0</p>
-  <p>Built from the <a href="INDEX.md">research module</a> — vendor database · decision matrix · regulatory pathway · pilot roadmap · financial model · EoS dossier · grant proposal</p>
+  <p>Live at <a href="https://bim2print.codeovertcp.com">bim2print.codeovertcp.com</a> · <a href="INDEX.md">Research module index</a> · <a href="../ARCHITECTURE.md">Pipeline architecture</a></p>
 </div>
 
 </div>
