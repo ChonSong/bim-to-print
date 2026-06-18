@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<GHDefinition xmlns="http://schemas.rhino3d.com/grasshopper">
+  <name>bim-to-print GH Export</name>
+  <version>1.0.0</version>
+  <created>2026-06-18T12:04:02.234982</created>
+  <project>
+    <name>bim-to-print</name>
+    <description>Grasshopper → JSON → bim2print G-code pipeline</description>
+  </project>
+  <components>
+    <component x="10" y="10" uid="B94D70A8-CAC3-4024-B4E1-2623FDB5C8B6">
+      <name>Rectangle</name>
+      <nickname>Rect</nickname>
+      <inputs>
+        <input name="Plane" type="Plane" id="0">
+          <description>Base plane</description>
+          <expression>Plane.WorldXY</expression>
+        </input>
+        <input name="Width X" type="float" id="1">
+          <description>Wall length (mm)</description>
+          <expression>3000.0</expression>
+        </input>
+        <input name="Width Y" type="float" id="2">
+          <description>Wall thickness (mm)</description>
+          <expression>200.0</expression>
+        </input>
+        <input name="R" type="float" id="3">
+          <description>Corner radius</description>
+          <expression>0.0</expression>
+        </input>
+      </inputs>
+      <outputs>
+        <output name="Rectangle" type="Curve" id="0">
+          <description>Rectangle curve</description>
+        </output>
+      </outputs>
+    </component>
+    <component x="200" y="10" uid="7279C067-7D94-44C4-9A29-18B3F60B37C5">
+      <name>Extrude</name>
+      <nickname>Extrude</nickname>
+      <inputs>
+        <input name="Base" type="Curve" id="0">
+          <description>Profile curve</description>
+          <source>0#B94D70A8-CAC3-4024-B4E1-2623FDB5C8B6</source>
+        </input>
+        <input name="Direction" type="Vector3D" id="1">
+          <description>Extrusion direction</description>
+          <expression>Vector3D(0,0,1)</expression>
+        </input>
+        <input name="Height" type="float" id="2">
+          <description>Wall height (mm)</description>
+          <expression>2400.0</expression>
+        </input>
+      </inputs>
+      <outputs>
+        <output name="Extruded" type="Brep" id="0">
+          <description>Extruded solid</description>
+        </output>
+      </outputs>
+    </component>
+    <component x="400" y="10" uid="0750866F-E02D-4F41-8680-EB664B534288">
+      <name>Panel</name>
+      <nickname>Panel</nickname>
+      <inputs>
+        <input name="" type="text" id="0">
+          <description>Static text</description>
+          <expression>"BIM-to-Print Wall\nWidth: 3000.0mm, Thickness: 200.0mm, Height: 2400.0mm\nVolume: 1.44 m\u00b3\nLayers @5mm: 480"</expression>
+        </input>
+      </inputs>
+    </component>
+    <component x="400" y="120" uid="9EDEF951-364D-48C8-8168-8AC873254FFC">
+      <name>Python</name>
+      <nickname>Export JSON</nickname>
+      <inputs>
+        <input name="Brep" type="Brep" id="0">
+          <description>Extruded wall</description>
+          <source>0#7279C067-7D94-44C4-9A29-18B3F60B37C5</source>
+        </input>
+      </inputs>
+      <outputs>
+        <output name="Path" type="text" id="0">
+          <description>Output file path</description>
+        </output>
+      </outputs>
+      <code>import rhinoscriptsyntax as rs
+import json
+
+output_path = r"/tmp/gh_wall.json"
+
+if Brep:
+    # Get bounding box
+    bbox = rs.BoundingBox(Brep)
+    if bbox:
+        x0, y0, _ = bbox[0]
+        x1, y1, z1 = bbox[6]
+        w = x1 - x0
+        t = y1 - y0
+        h = z1
+
+        profile = {
+            "name": "GH-Wall",
+            "ifc_type": "IfcWall",
+            "points_2d": [
+                [0, 0],
+                [w, 0],
+                [w, t],
+                [0, t],
+                [0, 0],
+            ],
+            "base_elevation": 0,
+            "height": h,
+        }
+        with open(output_path, "w") as f:
+            json.dump([profile], f, indent=2)
+        Path = output_path</code>
+    </component>
+  </components>
+  <connections>
+    <connection>
+      <source>B94D70A8-CAC3-4024-B4E1-2623FDB5C8B6:0</source>
+      <target>7279C067-7D94-44C4-9A29-18B3F60B37C5:0</target>
+    </connection>
+    <connection>
+      <source>7279C067-7D94-44C4-9A29-18B3F60B37C5:0</source>
+      <target>9EDEF951-364D-48C8-8168-8AC873254FFC:0</target>
+    </connection>
+  </connections>
+</GHDefinition>

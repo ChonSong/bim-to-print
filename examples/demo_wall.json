@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Example-Wall-01",
+    "ifc_type": "IfcWall",
+    "points_2d": [
+      [0.0, 0.0],
+      [3000.0, 0.0],
+      [3000.0, 200.0],
+      [0.0, 200.0],
+      [0.0, 0.0]
+    ],
+    "base_elevation": 0.0,
+    "height": 2400.0
+  },
+  {
+    "name": "Example-Column-01",
+    "ifc_type": "IfcColumn",
+    "points_2d": [
+      [0.0, 0.0],
+      [300.0, 0.0],
+      [300.0, 300.0],
+      [0.0, 300.0],
+      [0.0, 0.0]
+    ],
+    "base_elevation": 0.0,
+    "height": 2400.0
+  }
+]
