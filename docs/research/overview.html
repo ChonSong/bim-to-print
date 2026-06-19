@@ -379,6 +379,34 @@
 <div class="viz-caption">The bim2print pipeline: two input paths (IFC &amp; GH JSON), four processing stages, Marlin G-code output. The research module (bottom) informs every decision.</div>
 
 <!-- ======================================================================= -->
+<!-- VISUAL 1B: G-CODE TOOLPATH RENDERINGS                                   -->
+<!-- ======================================================================= -->
+<h2><span class="num">1b</span> G-code toolpath renderings</h2>
+<p>Actual toolpaths generated from the demo house model — 56,260 moves across 720 layers. Perimeters in blue, infill in green, window/door openings visible as gaps.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;">
+  <div class="viz-box" style="padding:8px;">
+    <h4 style="margin:0 0 8px;color:#e2e4ed;font-size:13px;">🗺️ Plan view — top-down</h4>
+    <img src="plan_view.svg" alt="Plan view of G-code toolpaths" style="width:100%;border-radius:6px;">
+    <div style="margin-top:6px;color:#8b92ab;font-size:10px;">4.5 m overall width · Perimeters (blue) + Infill (green) · Layer count bar right</div>
+  </div>
+  <div class="viz-box" style="padding:8px;">
+    <h4 style="margin:0 0 8px;color:#e2e4ed;font-size:13px;">🏗️ Layer stack — isometric</h4>
+    <img src="layer_stack.svg" alt="Layer stack isometric view" style="width:100%;border-radius:6px;">
+    <div style="margin-top:6px;color:#8b92ab;font-size:10px;">35 sampled layers (of 720 total) · 2.4 m build height · 10 mm per layer</div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Interactive 3D viewers:</strong>
+  <a href="https://bim2print.codeovertcp.com/toolpath_viz.html" style="color:var(--accent);" target="_blank">🔗 G-code toolpath viewer</a>
+  — orbit, zoom, scroll through layers, play/pause layer-by-layer build animation (Three.js).
+  <br>
+  <a href="https://bim2print.codeovertcp.com/compas_house_viz.html" style="color:var(--accent);" target="_blank">🔗 COMPAS filled-polygon viewer</a>
+  — same building rendered as solid filled polygons with window/door openings subtracted.
+</div>
+
+<!-- ======================================================================= -->
 <!-- 2. THE OPPORTUNITY                                                      -->
 <!-- ======================================================================= -->
 <h2><span class="num">2</span> The opportunity</h2>
