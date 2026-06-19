@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bim-to-print"
-version = "0.2.0"
+version = "0.3.0"
 description = "Automated BIM-to-print pipeline — IFC/GH → custom slicer → G-code for 3D concrete printing"
 readme = "README.md"
 license = {text = "MIT"}

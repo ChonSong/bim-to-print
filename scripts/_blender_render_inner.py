@@ -196,18 +196,18 @@ ground.data.materials.append(ground_mat)
 # ── Lighting ──
 bpy.ops.object.light_add(type="SUN", location=(10000, 8000, 8000))
 sun = bpy.context.active_object
-sun.data.energy = 6.0
-sun.data.angle = 0.01
+sun.data.energy = 20.0
+sun.data.angle = 0.005
 
 bpy.ops.object.light_add(type="SUN", location=(-5000, 2000, 6000))
 fill_sun = bpy.context.active_object
-fill_sun.data.energy = 1.5
-fill_sun.data.angle = 0.02
+fill_sun.data.energy = 5.0
+fill_sun.data.angle = 0.01
 
-bpy.ops.object.light_add(type="AREA", location=(0, 0, 4000))
+bpy.ops.object.light_add(type="AREA", location=(5000, 4000, 5000))
 amb = bpy.context.active_object
-amb.data.energy = 100
-amb.data.size = 5000
+amb.data.energy = 500
+amb.data.size = 10000
 
 # ── Scene setup ──
 # Compute bounding box
@@ -216,11 +216,19 @@ cx = sum(o.location.x for o in all_objs) / len(all_objs)
 cy = sum(o.location.y for o in all_objs) / len(all_objs)
 cz = 1200  # mid-height
 
-# World background
+# World background — bright sky for natural outdoor lighting
 world = bpy.context.scene.world
 world.use_nodes = True
-bg = world.node_tree.nodes["Background"]
-bg.inputs["Strength"].default_value = 0.3
+nw = world.node_tree.nodes
+lw = world.node_tree.links
+for n in nw:
+    nw.remove(n)
+
+bg = nw.new("ShaderNodeBackground")
+bg.inputs["Color"].default_value = (0.45, 0.55, 0.7, 1.0)
+bg.inputs["Strength"].default_value = 2.0
+out = nw.new("ShaderNodeOutputMaterial")
+lw.new(bg.outputs["Background"], out.inputs["Surface"])
 
 # Render settings
 bpy.context.scene.render.engine = "CYCLES"

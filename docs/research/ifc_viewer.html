@@ -511,7 +511,12 @@ function updateClip(val) {
   clipPlane.constant = clipH;
   clipVal.textContent = `${(frac * 100).toFixed(0)}%`;
   // update visibility
-  wallMeshes.forEach(m => { m.material.clippingPlanes = [clipPlane]; m.material.needsUpdate = true; });
+  wallMeshes.forEach(m => {
+    m.material = m.material.clone();
+    m.material.clippingPlanes = [clipPlane];
+    m.material.clipShadows = true;
+    m.material.needsUpdate = true;
+  });
 }
 
 clipSlider.addEventListener('input', () => updateClip(parseFloat(clipSlider.value)));
