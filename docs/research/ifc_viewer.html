@@ -19,6 +19,16 @@
     background: #1a3a3a; color: #43c9a0; font-size: 11px; font-weight: 600;
     padding: 2px 8px; border-radius: 4px; white-space: nowrap;
   }
+  #view-modes {
+    display: flex; gap: 3px; margin-left: auto;
+  }
+  #view-modes button {
+    background: transparent; border: 1px solid #30363d; color: #8b949e;
+    font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  #view-modes button:hover { background: #21262d; }
+  #view-modes button.active { background: #1a3a3a; border-color: #43c9a0; color: #43c9a0; }
   #viewer {
     position: fixed; top: 44px; left: 0; right: 0; bottom: 0;
     background: #0d1117;
@@ -72,8 +82,16 @@
 <div id="header">
   <h2>🏠 bim2print — IFC Building Viewer</h2>
   <span class="badge">BIM model</span>
-  <span class="badge" style="background:#2a1a2a;border-color:#8b5cf6;color:#8b5cf6">v2 — section + measure</span>
+  <span class="badge" style="background:#2a1a2a;border-color:#8b5cf6;color:#8b5cf6">v3 — plan views</span>
   <span class="sub">orbit/zoom/pan · walls with openings</span>
+  <span id="view-modes">
+    <button class="active" data-view="3d">3D</button>
+    <button data-view="plan">Plan</button>
+    <button data-view="elev-n">N</button>
+    <button data-view="elev-s">S</button>
+    <button data-view="elev-e">E</button>
+    <button data-view="elev-w">W</button>
+  </span>
 </div>
 
 <div id="viewer"></div>
@@ -248,6 +266,16 @@ const profiles = [
     pts: [[4200,0],[4200,300],[4500,300],[4500,0],[4200,0]],
     z: 0, h: 2400, mat: concreteMatDark,
     openings: [] },
+  // Foundation slab
+  { name: "Slab", type: "slab",
+    pts: [[-100,-100],[4600,-100],[4600,1100],[-100,1100],[-100,-100]],
+    z: -150, h: 150, mat: makeConcreteMat('#555555'),
+    openings: [] },
+  // Flat roof slab
+  { name: "Roof", type: "roof",
+    pts: [[-100,-100],[4600,-100],[4600,1100],[-100,1100],[-100,-100]],
+    z: 2400, h: 150, mat: makeConcreteMat('#7a7a7a'),
+    openings: [] },
 ];
 
 function makeWallMesh(profile) {
@@ -389,8 +417,17 @@ for (const profile of profiles) {
 
 buildMeasurements();
 
-// ── Auto-fit ──
-const box = new THREE.Box3().setFromObject(scene);
+// ── Auto-fit — exclude grid from bounding box ──
+function computeBuildingBounds() {
+  const box = new THREE.Box3();
+  wallMeshes.forEach(m => box.expandByObject(m));
+  // Also include opening fills
+  scene.children.forEach(c => {
+    if (c.isMesh && c.material === openingMat) box.expandByObject(c);
+  });
+  return box;
+}
+const box = computeBuildingBounds();
 const center = box.getCenter(new THREE.Vector3());
 const size = box.getSize(new THREE.Vector3());
 const maxDim = Math.max(size.x, size.y, size.z);
@@ -415,8 +452,12 @@ function toast(msg, isGood = true) {
 
 // ── Controls ──
 document.getElementById('fit-btn').addEventListener('click', () => {
-  controls.target.copy(center);
-  camera.position.set(center.x + maxDim * 1.5, maxDim * 1.0, center.z + maxDim * 1.8);
+  const fb = computeBuildingBounds();
+  const fc = fb.getCenter(new THREE.Vector3());
+  const fs = fb.getSize(new THREE.Vector3());
+  const fd = Math.max(fs.x, fs.y, fs.z);
+  controls.target.copy(fc);
+  camera.position.set(fc.x + fd * 1.5, fd * 1.0, fc.z + fd * 1.8);
   controls.update();
 });
 
@@ -545,12 +586,77 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   }
 });
 
+// ── View mode switching ──
+const viewBtns = document.querySelectorAll('[data-view]');
+const savedV3 = new THREE.Vector3();
+const savedTarget = new THREE.Vector3();
+let orthoCam = null;
+let usingOrtho = false;
+
+function setView(viewName) {
+  const fb = computeBuildingBounds();
+  const fc = fb.getCenter(new THREE.Vector3());
+  const fs = fb.getSize(new THREE.Vector3());
+  const fd = Math.max(fs.x, fs.y, fs.z, 500);
+  const aspect = w / h;
+  const dist = fd * 1.5;
+
+  if (usingOrtho) {
+    scene.remove(orthoCam);
+    orthoCam = null;
+    usingOrtho = false;
+    controls.object = camera;
+    camera.position.copy(savedV3);
+    controls.target.copy(savedTarget);
+  }
+
+  if (viewName === '3d') {
+    controls.target.copy(fc);
+    camera.position.set(fc.x + fd * 1.5, fd * 1.0, fc.z + fd * 1.8);
+  } else if (viewName === 'plan') {
+    // Switch to orthographic top-down
+    savedV3.copy(camera.position);
+    savedTarget.copy(controls.target);
+
+    const half = fd * 0.6;
+    orthoCam = new THREE.OrthographicCamera(-half * aspect, half * aspect, half, -half, 1, 10000);
+    orthoCam.position.set(fc.x, 3000, fc.z);
+    orthoCam.up.set(0, 0, -1);
+    orthoCam.lookAt(fc.x, 0, fc.z);
+    usingOrtho = true;
+    controls.object = orthoCam;
+    controls.target.set(fc.x, 0, fc.z);
+  } else if (viewName === 'elev-n') {
+    controls.target.copy(fc);
+    camera.position.set(fc.x, fc.y + fd * 0.5, fc.z + dist);
+  } else if (viewName === 'elev-s') {
+    controls.target.copy(fc);
+    camera.position.set(fc.x, fc.y + fd * 0.5, fc.z - dist);
+  } else if (viewName === 'elev-e') {
+    controls.target.copy(fc);
+    camera.position.set(fc.x + dist, fc.y + fd * 0.5, fc.z);
+  } else if (viewName === 'elev-w') {
+    controls.target.copy(fc);
+    camera.position.set(fc.x - dist, fc.y + fd * 0.5, fc.z);
+  }
+  controls.update();
+}
+
+viewBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    viewBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setView(btn.dataset.view);
+  });
+});
+
 // ── Animation ──
 function animate() {
+  const activeCam = usingOrtho && orthoCam ? orthoCam : camera;
   requestAnimationFrame(animate);
   controls.update();
-  renderer.render(scene, camera);
-  labelRenderer.render(scene, camera);
+  renderer.render(scene, activeCam);
+  labelRenderer.render(scene, activeCam);
 }
 animate();
 
@@ -559,6 +665,18 @@ window.addEventListener('resize', () => {
   const w2 = container.clientWidth, h2 = container.clientHeight;
   camera.aspect = w2 / h2;
   camera.updateProjectionMatrix();
+  if (orthoCam && usingOrtho) {
+    const fb = computeBuildingBounds();
+    const fs = fb.getSize(new THREE.Vector3());
+    const fd = Math.max(fs.x, fs.y, fs.z, 500);
+    const half = fd * 0.6;
+    const aspect2 = w2 / h2;
+    orthoCam.left = -half * aspect2;
+    orthoCam.right = half * aspect2;
+    orthoCam.top = half;
+    orthoCam.bottom = -half;
+    orthoCam.updateProjectionMatrix();
+  }
   renderer.setSize(w2, h2);
   labelRenderer.setSize(w2, h2);
 });
