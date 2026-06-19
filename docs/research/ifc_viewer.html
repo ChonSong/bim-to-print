@@ -11,13 +11,13 @@
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     background: rgba(13,17,23,0.92); backdrop-filter: blur(8px);
     border-bottom: 1px solid #21262d;
-    padding: 8px 16px; display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   }
-  #header h2 { color: #f0f6fc; font-size: 15px; font-weight: 600; }
+  #header h2 { color: #f0f6fc; font-size: 15px; font-weight: 600; white-space: nowrap; }
   #header .sub { color: #8b949e; font-size: 12px; }
   #header .badge {
     background: #1a3a3a; color: #43c9a0; font-size: 11px; font-weight: 600;
-    padding: 2px 8px; border-radius: 4px;
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
   }
   #viewer {
     position: fixed; top: 44px; left: 0; right: 0; bottom: 0;
@@ -31,15 +31,39 @@
   }
   #controls {
     position: fixed; bottom: 12px; right: 12px; z-index: 100;
-    display: flex; gap: 6px;
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+    max-width: 300px;
   }
-  #controls button {
+  #controls button, #controls label {
     background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
-    font-size: 12px; padding: 4px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    white-space: nowrap;
   }
   #controls button:hover { background: #30363d; }
+  #controls button.active { background: #1a3a3a; border-color: #43c9a0; color: #43c9a0; }
+  #clip-row {
+    position: fixed; bottom: 52px; right: 12px; z-index: 100;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(22,27,34,0.9); border: 1px solid #30363d;
+    border-radius: 8px; padding: 6px 12px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  #clip-row.visible { opacity: 1; pointer-events: auto; }
+  #clip-row label { color: #8b949e; font-size: 11px; white-space: nowrap; }
+  #clip-row input[type=range] {
+    width: 120px; accent-color: #5b8def;
+  }
+  #clip-row .val { color: #f0f6fc; font-size: 11px; min-width: 50px; text-align: right; }
+  #toast {
+    position: fixed; top: 52px; right: 12px; z-index: 200;
+    background: #1a3a3a; border: 1px solid #43c9a0; color: #43c9a0;
+    font-size: 12px; padding: 6px 14px; border-radius: 8px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
   @media (max-width: 768px) {
-    #header .sub { display: none; }
+    #header .sub, #header .badge:not(:first-child) { display: none; }
+    #controls { max-width: 200px; }
   }
 </style>
 </head>
@@ -48,17 +72,29 @@
 <div id="header">
   <h2>🏠 bim2print — IFC Building Viewer</h2>
   <span class="badge">BIM model</span>
-  <span class="sub">demo_house.ifc · orbit/zoom/pan · walls with openings</span>
+  <span class="badge" style="background:#2a1a2a;border-color:#8b5cf6;color:#8b5cf6">v2 — section + measure</span>
+  <span class="sub">orbit/zoom/pan · walls with openings</span>
 </div>
 
 <div id="viewer"></div>
+<div id="stats">Loading…</div>
+<div id="toast"></div>
 
-<div id="stats">Loading IFC model…</div>
+<div id="clip-row">
+  <label>Section</label>
+  <input type="range" id="clip-slider" min="0" max="100" value="100">
+  <span class="val" id="clip-val">100%</span>
+  <button id="clip-reset" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;">Reset</button>
+</div>
 
 <div id="controls">
-  <button id="fit-btn">⟲ Fit view</button>
+  <button id="fit-btn">⟲ Fit</button>
   <button id="mat-btn">Concrete</button>
   <button id="wire-btn">Wireframe</button>
+  <button id="clip-btn">✂ Section</button>
+  <button id="meas-btn">📏 Measure</button>
+  <button id="ss-btn">📷 Screenshot</button>
+  <button id="render-btn" title="Generate AI concept render from current view">✨ AI Render</button>
 </div>
 
 <script type="importmap">
@@ -86,13 +122,14 @@ scene.background = new THREE.Color(0x0d1117);
 const camera = new THREE.PerspectiveCamera(40, w / h, 1, 100000);
 camera.position.set(6000, 4000, 7000);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(w, h);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
+renderer.localClippingEnabled = true;
 container.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -113,10 +150,8 @@ controls.maxDistance = 30000;
 // ── Lighting ──
 const ambient = new THREE.AmbientLight(0x404660, 0.6);
 scene.add(ambient);
-
 const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a3a5a, 0.4);
 scene.add(hemi);
-
 const sun = new THREE.DirectionalLight(0xffeedd, 2.0);
 sun.position.set(5000, 8000, 4000);
 sun.castShadow = true;
@@ -129,11 +164,9 @@ sun.shadow.camera.right = 5000;
 sun.shadow.camera.top = 5000;
 sun.shadow.camera.bottom = -5000;
 scene.add(sun);
-
 const fill = new THREE.DirectionalLight(0x8888ff, 0.3);
 fill.position.set(-3000, 2000, -3000);
 scene.add(fill);
-
 const rim = new THREE.DirectionalLight(0xffffff, 0.5);
 rim.position.set(-2000, 1000, 4000);
 scene.add(rim);
@@ -141,8 +174,6 @@ scene.add(rim);
 // ── Grid & ground ──
 const gridHelper = new THREE.GridHelper(12000, 30, 0x21262d, 0x21262d);
 scene.add(gridHelper);
-
-// Ground plane for shadows
 const groundGeo = new THREE.PlaneGeometry(12000, 12000);
 const groundMat = new THREE.ShadowMaterial({ opacity: 0.3 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -151,71 +182,72 @@ ground.position.y = -2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ── Concrete materials ──
-function createConcreteMaterial(color = '#8a8a8a', roughness = 0.85, metalness = 0.0) {
+// ── Concrete material ──
+function createConcreteTexture(color = '#9a9a9a') {
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 256;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 2000; i++) {
+  for (let i = 0; i < 3000; i++) {
     const x = Math.random() * 256, y = Math.random() * 256;
-    const r = Math.random() * 3 + 1;
-    const grey = 120 + Math.random() * 40;
-    ctx.fillStyle = `rgb(${grey},${grey},${grey})`;
+    const r = Math.random() * 3 + 0.5;
+    const g = 110 + Math.random() * 50;
+    ctx.fillStyle = `rgb(${g},${g},${g})`;
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
   }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
+  // Add darker specks for aggregate
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * 256, y = Math.random() * 256;
+    ctx.fillStyle = '#555555';
+    ctx.beginPath(); ctx.arc(x, y, 2 + Math.random() * 2, 0, Math.PI * 2); ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(3, 3);
+  return tex;
+}
+
+function makeConcreteMat(baseColor) {
   return new THREE.MeshStandardMaterial({
-    map: texture,
-    roughness: roughness,
-    metalness: metalness,
-    color: new THREE.Color(color),
+    map: createConcreteTexture(baseColor),
+    roughness: 0.85, metalness: 0.0,
+    color: new THREE.Color(baseColor),
   });
 }
 
-const concreteMat = createConcreteMaterial('#9a9a9a', 0.85, 0.0);
-const concreteMatDark = createConcreteMaterial('#6a6a6a', 0.9, 0.0);
-const concreteMatWarm = createConcreteMaterial('#a09080', 0.8, 0.0);
+const concreteMat = makeConcreteMat('#999999');
+const concreteMatDark = makeConcreteMat('#6a6a6a');
+const concreteMatWarm = makeConcreteMat('#a09080');
 const openingMat = new THREE.MeshStandardMaterial({
-  color: '#2d3348',
-  roughness: 0.5,
-  metalness: 0.2,
-  transparent: true,
-  opacity: 0.3,
+  color: '#2d3348', roughness: 0.5, metalness: 0.2,
+  transparent: true, opacity: 0.25, side: THREE.DoubleSide,
 });
 
-// ── IFC-based geometry ──
-// Since we can't load IFC in browser without web-ifc WASM,
-// we generate the geometry directly from the known building profiles.
-// This replicates what IFC.js would do.
+// ── Clipping plane ──
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 2400);
+let clipEnabled = false;
+const clipObjects = [];
 
+// ── Building geometry ──
 const profiles = [
-  {
-    name: "Main Wall", type: "wall",
+  { name: "Main Wall", type: "wall",
     pts: [[0,0],[4000,0],[4000,200],[0,200],[0,0]],
     z: 0, h: 2400, mat: concreteMat,
     openings: [
       { name: "Window-01", x: 500, w: 1000, d: 200, z: 800, h: 1200 },
       { name: "Door-01", x: 2500, w: 1000, d: 200, z: 0, h: 2100 },
-    ]
-  },
-  {
-    name: "Side Wall", type: "wall",
+    ] },
+  { name: "Side Wall", type: "wall",
     pts: [[4000,0],[4000,1000],[4200,1000],[4200,0],[4000,0]],
     z: 0, h: 2400, mat: concreteMatWarm,
     openings: [
       { name: "Window-02", x: 0, w: 200, d: 600, z: 900, h: 1000 },
-    ]
-  },
-  {
-    name: "Column", type: "column",
+    ] },
+  { name: "Column", type: "column",
     pts: [[4200,0],[4200,300],[4500,300],[4500,0],[4200,0]],
     z: 0, h: 2400, mat: concreteMatDark,
-    openings: []
-  }
+    openings: [] },
 ];
 
 function makeWallMesh(profile) {
@@ -224,23 +256,23 @@ function makeWallMesh(profile) {
   shape.moveTo(pts[0][0], pts[0][1]);
   for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
   shape.closePath();
-
   for (const op of openings) {
     const hole = new THREE.Path();
-    const ox = op.x, oy = pts[0][1] + 1;
-    hole.moveTo(ox, oy);
-    hole.lineTo(ox + op.w, oy);
-    hole.lineTo(ox + op.w, oy + op.d);
-    hole.lineTo(ox, oy + op.d);
+    const oy = pts[0][1] + 1;
+    hole.moveTo(op.x, oy);
+    hole.lineTo(op.x + op.w, oy);
+    hole.lineTo(op.x + op.w, oy + op.d);
+    hole.lineTo(op.x, oy + op.d);
     hole.closePath();
     shape.holes.push(hole);
   }
-
   const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
   geo.translate(0, 0, z);
-  const mesh = new THREE.Mesh(geo, mat);
+  const mesh = new THREE.Mesh(geo, mat.clone());
   mesh.castShadow = true;
   mesh.receiveShadow = true;
+  mesh.material.clippingPlanes = [clipPlane];
+  mesh.material.clipShadows = true;
   return mesh;
 }
 
@@ -256,10 +288,72 @@ function makeOpeningFill(profile) {
     shape.closePath();
     const geo = new THREE.ExtrudeGeometry(shape, { depth: op.h, bevelEnabled: false });
     geo.translate(0, 0, op.z);
-    const mesh = new THREE.Mesh(geo, openingMat);
+    const mesh = new THREE.Mesh(geo, openingMat.clone());
+    mesh.material.clippingPlanes = [clipPlane];
     meshes.push(mesh);
   }
   return meshes;
+}
+
+// ── Measurement labels ──
+let measGroup = new THREE.Group();
+let measVisible = false;
+
+function buildMeasurements() {
+  if (measGroup.parent) scene.remove(measGroup);
+  measGroup = new THREE.Group();
+
+  const dims = [
+    { from: [0, 0], to: [4000, 0], yOff: -60, label: "4,000 mm (main wall)" },
+    { from: [4000, 0], to: [4000, 1000], yOff: 0, xOff: -40, label: "1,000 mm (side wall)" },
+    { from: [0, 0], to: [4500, 0], yOff: -90, label: "4,500 mm (total width)" },
+    { from: [0, 0], to: [0, 200], yOff: 0, xOff: -50, label: "200 mm (wall thickness)" },
+  ];
+
+  for (const d of dims) {
+    const [x1, y1] = d.from;
+    const [x2, y2] = d.to;
+    const yOff = d.yOff || 0;
+    const xOff = d.xOff || 0;
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    // Line
+    const pts = [
+      new THREE.Vector3(x1 + xOff, -1, y1 + yOff),
+      new THREE.Vector3(x2 + xOff, -1, y2 + yOff),
+    ];
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xf0c040, transparent: true, opacity: 0.6 });
+    measGroup.add(new THREE.Line(lineGeo, lineMat));
+
+    // End ticks
+    for (const [x, y] of [[x1, y1], [x2, y2]]) {
+      const tick = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x + xOff - 3, -1, y + yOff - 6),
+        new THREE.Vector3(x + xOff + 3, -1, y + yOff + 6),
+      ]);
+      measGroup.add(new THREE.Line(tick, lineMat));
+    }
+
+    // CSS2D label
+    const div = document.createElement('div');
+    div.textContent = d.label;
+    div.style.color = '#f0c040';
+    div.style.fontSize = '10px';
+    div.style.fontWeight = '600';
+    div.style.background = 'rgba(13,17,23,0.85)';
+    div.style.padding = '2px 6px';
+    div.style.borderRadius = '4px';
+    div.style.border = '1px solid #f0c040';
+    div.style.pointerEvents = 'none';
+    const label = new CSS2DObject(div);
+    label.position.set(midX + xOff, -1, midY + yOff - 16);
+    measGroup.add(label);
+  }
+
+  measGroup.visible = measVisible;
+  scene.add(measGroup);
 }
 
 // ── Build scene ──
@@ -271,11 +365,11 @@ for (const profile of profiles) {
   scene.add(mesh);
   wallMeshes.push(mesh);
   totFaces += mesh.geometry.attributes.position.count / 3;
-  
+
   const fills = makeOpeningFill(profile);
   for (const f of fills) scene.add(f);
 
-  // CSS2D label
+  // CSS2D label on wall
   const div = document.createElement('div');
   div.textContent = profile.name;
   div.style.color = '#8b949e';
@@ -286,17 +380,16 @@ for (const profile of profiles) {
   div.style.borderRadius = '4px';
   div.style.border = '1px solid #30363d';
   div.style.pointerEvents = 'none';
-
-  // Position label at center of wall
   const cx = profile.pts.reduce((s,p) => s + p[0], 0) / profile.pts.length;
   const cy = profile.pts.reduce((s,p) => s + p[1], 0) / profile.pts.length;
-  const lz = h / 2;
   const label = new CSS2DObject(div);
-  label.position.set(cx, lz, cy);
+  label.position.set(cx, profile.h / 2, cy);
   scene.add(label);
 }
 
-// ── Auto-fit camera ──
+buildMeasurements();
+
+// ── Auto-fit ──
 const box = new THREE.Box3().setFromObject(scene);
 const center = box.getCenter(new THREE.Vector3());
 const size = box.getSize(new THREE.Vector3());
@@ -305,9 +398,20 @@ controls.target.copy(center);
 camera.position.set(center.x + maxDim * 1.5, maxDim * 1.0, center.z + maxDim * 1.8);
 controls.update();
 
-// ── Stats ──
+const totalHeight = size.y;
+
 document.getElementById('stats').textContent =
   `${profiles.length} elements · ${totFaces.toLocaleString()} faces · ${profiles.reduce((s,p) => s + p.openings.length, 0)} openings`;
+
+// ── Toast helper ──
+function toast(msg, isGood = true) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = isGood ? '#43c9a0' : '#e05a5a';
+  el.style.color = isGood ? '#43c9a0' : '#e05a5a';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
 
 // ── Controls ──
 document.getElementById('fit-btn').addEventListener('click', () => {
@@ -321,22 +425,123 @@ document.getElementById('wire-btn').addEventListener('click', () => {
   wireMode = !wireMode;
   wallMeshes.forEach(m => m.material.wireframe = wireMode);
   document.getElementById('wire-btn').textContent = wireMode ? 'Solid' : 'Wireframe';
+  document.getElementById('wire-btn').classList.toggle('active', wireMode);
 });
 
 let matToggle = false;
 document.getElementById('mat-btn').addEventListener('click', () => {
   matToggle = !matToggle;
-  const colors = [0x5b8def, 0x43c9a0, 0x8b5cf6];
+  const altColors = [0x5b8def, 0x43c9a0, 0x8b5cf6];
   wallMeshes.forEach((m, i) => {
-    m.material.color.setHex(colors[i % 3]);
-    m.material.map = null;
+    if (matToggle) {
+      m.material.color.setHex(altColors[i % 3]);
+      m.material.map = null;
+    } else {
+      m.material = profiles[i].mat.clone();
+      m.material.clippingPlanes = [clipPlane];
+      m.material.clipShadows = true;
+    }
     m.material.needsUpdate = true;
   });
   document.getElementById('mat-btn').textContent = matToggle ? 'Colour' : 'Concrete';
-  if (!matToggle) {
-    wallMeshes.forEach((m, i) => {
-      m.material = profiles[i].mat.clone();
-    });
+  document.getElementById('mat-btn').classList.toggle('active', matToggle);
+});
+
+// ── Clipping ──
+const clipRow = document.getElementById('clip-row');
+const clipSlider = document.getElementById('clip-slider');
+const clipVal = document.getElementById('clip-val');
+
+document.getElementById('clip-btn').addEventListener('click', () => {
+  clipEnabled = !clipEnabled;
+  clipRow.classList.toggle('visible', clipEnabled);
+  document.getElementById('clip-btn').classList.toggle('active', clipEnabled);
+  if (clipEnabled) {
+    clipSlider.value = 100;
+    updateClip(100);
+  } else {
+    updateClip(100);
+  }
+});
+
+function updateClip(val) {
+  const frac = val / 100;
+  const clipH = 2400 * frac;
+  clipPlane.constant = clipH;
+  clipVal.textContent = `${(frac * 100).toFixed(0)}%`;
+  // update visibility
+  wallMeshes.forEach(m => { m.material.clippingPlanes = [clipPlane]; m.material.needsUpdate = true; });
+}
+
+clipSlider.addEventListener('input', () => updateClip(parseFloat(clipSlider.value)));
+document.getElementById('clip-reset').addEventListener('click', () => {
+  clipSlider.value = 100;
+  updateClip(100);
+});
+
+// ── Measurements ──
+document.getElementById('meas-btn').addEventListener('click', () => {
+  measVisible = !measVisible;
+  measGroup.visible = measVisible;
+  document.getElementById('meas-btn').classList.toggle('active', measVisible);
+});
+
+// ── Screenshot ──
+document.getElementById('ss-btn').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const link = document.createElement('a');
+  link.download = 'bim2print-viewer-screenshot.png';
+  link.href = renderer.domElement.toDataURL('image/png');
+  link.click();
+  toast('📷 Screenshot saved');
+});
+
+// ── AI Render ──
+document.getElementById('render-btn').addEventListener('click', async () => {
+  renderer.render(scene, camera);
+  const dataUrl = renderer.domElement.toDataURL('image/png');
+
+  // Copy to clipboard for the user to run the enhancement script
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blob })
+    ]);
+    toast('📋 View copied — run scripts/enhance_render.py to generate AI concept image');
+  } catch {
+    // Fallback: download instead
+    const link = document.createElement('a');
+    link.download = 'bim2print-view-for-ai.png';
+    link.href = dataUrl;
+    link.click();
+    toast('📷 Image saved — run scripts/enhance_render.py for AI enhancement');
+  }
+});
+
+// ── Hover highlighting ──
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let hoveredMesh = null;
+
+renderer.domElement.addEventListener('pointermove', (e) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObjects(wallMeshes);
+  if (hoveredMesh && (!intersects.length || intersects[0].object !== hoveredMesh)) {
+    hoveredMesh.material.emissive.setHex(0x000000);
+    hoveredMesh = null;
+    renderer.domElement.style.cursor = 'default';
+  }
+  if (intersects.length) {
+    const obj = intersects[0].object;
+    if (obj !== hoveredMesh) {
+      if (hoveredMesh) hoveredMesh.material.emissive.setHex(0x000000);
+      hoveredMesh = obj;
+      obj.material.emissive.setHex(0x333366);
+      renderer.domElement.style.cursor = 'pointer';
+    }
   }
 });
 
