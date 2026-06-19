@@ -1,6 +1,6 @@
 """Inner Blender script — runs inside the Docker container via blender --background.
 Builds walls with proper openings, slab, roof, renders 6 views."""
-import bpy, bmesh, math, os
+import bpy, bmesh, math, os, json
 
 
 def clean_scene():
@@ -144,26 +144,47 @@ glass_mat = make_concrete_mat("GlassMat", (0.2, 0.3, 0.4, 0.3))
 glass_mat.blend_method = "BLEND"
 glass_mat.shadow_method = "NONE"
 
-# ── Build geometry ──
-# Main wall with window + door
-make_wall_with_openings("Main-Wall", [(0,0),(4000,0),(4000,200),(0,200)], 0, 2400, [
-    {"name": "Window", "x": 500, "y": 0, "w": 1000, "d": 200, "z": 800, "h": 1200},
-    {"name": "Door", "x": 2500, "y": 0, "w": 1000, "d": 200, "z": 0, "h": 2100},
-], conc_wall)
+# ── Build geometry from floor plan JSON ──
+profiles = __FLOORPLAN_JSON__
 
-# Side wall with window
-make_wall_with_openings("Side-Wall", [(4000,0),(4000,1000),(4200,1000),(4200,0)], 0, 2400, [
-    {"name": "SideWindow", "x": 0, "y": 0, "w": 200, "d": 600, "z": 900, "h": 1000},
-], conc_dark)
+for prof in profiles:
+    name = prof["name"]
+    pts = prof["points_2d"]
+    z = prof.get("base_elevation", 0)
+    h = prof["height"]
+    ifc_type = prof.get("ifc_type", "IfcBuildingElementProxy")
 
-# Column
-make_solid_box("Column", 4350, 150, 1200, 150, 150, 1200, conc_dark)
+    if "Wall" in ifc_type:
+        openings = prof.get("openings", [])
+        # Convert openings to blender format
+        blender_openings = []
+        for op in openings:
+            op_pts = op["shape"]
+            min_x = min(p[0] for p in op_pts)
+            max_x = max(p[0] for p in op_pts)
+            min_y = min(p[1] for p in op_pts)
+            max_y = max(p[1] for p in op_pts)
+            blender_openings.append({
+                "x": min_x, "y": min_y - pts[0][1],
+                "w": max_x - min_x, "d": max_y - min_y,
+                "z": op["z_start"], "h": op["z_end"] - op["z_start"],
+                "name": op.get("name", "Opening"),
+            })
+        mat = conc_wall if "Wall" in name and "Bathroom" not in name else conc_dark
+        make_wall_with_openings(name, pts, z, h, blender_openings, mat)
 
-# Slab foundation
-make_solid_box("Slab", 2250, 500, -80, 2350, 600, 80, conc_slab)
-
-# Roof
-make_solid_box("Roof", 2250, 500, 2480, 2350, 600, 80, conc_slab)
+    elif "Slab" in ifc_type or "Roof" in ifc_type:
+        make_solid_box(name,
+            (min(p[0] for p in pts) + max(p[0] for p in pts)) / 2,
+            (min(p[1] for p in pts) + max(p[1] for p in pts)) / 2,
+            z + h / 2,
+            (max(p[0] for p in pts) - min(p[0] for p in pts)) / 2,
+            (max(p[1] for p in pts) - min(p[1] for p in pts)) / 2,
+            h / 2,
+            conc_slab)
+    else:
+        mat = conc_dark
+        make_wall_with_openings(name, pts, z, h, [], mat)
 
 # Ground plane
 bpy.ops.mesh.primitive_plane_add(size=15000, location=(2250, 500, -120))

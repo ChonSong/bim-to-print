@@ -1,53 +1,59 @@
 #!/usr/bin/env python3
 """Render BIM model views using Blender headless via Docker.
 
-Builds walls, columns, slab, roof with proper openings using bmesh
-(no boolean modifiers — direct mesh construction). Renders 6 standard
-architectural views + generates QA reference images.
+Reads a GH-style JSON floor plan, builds walls with proper openings using bmesh,
+renders 6 standard architectural views (overview, plan, N/S/E/W elevations).
 
 Usage:
-    python scripts/blender_render.py [--output renders/] [--samples 128]
+    python scripts/blender_render.py [--model examples/house_floorplan.json]
+                                     [--output docs/research/renders] [--samples 128]
 """
 
 import argparse
-import math
+import json
 import os
 import subprocess
 import sys
 import tempfile
 
+
 BLENDER_IMAGE = "nytimes/blender:latest"
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+INNER_SCRIPT = os.path.join(os.path.dirname(__file__), "_blender_render_inner.py")
 
 
-def build_wall_mesh_script() -> str:
-    """Return Blender Python code. Read as file, not as heredoc."""
-    path = os.path.join(SCRIPT_DIR, "_blender_render_inner.py")
-    with open(path) as f:
-        return f.read()
+def make_render_script(profiles: list[dict], samples: int) -> str:
+    """Generate Blender Python script from floor plan data."""
+    walls_json = json.dumps(profiles)
+
+    inner = open(INNER_SCRIPT).read()
+    inner = inner.replace("__FLOORPLAN_JSON__", walls_json)
+    inner = inner.replace("__CYCLES_SAMPLES__", str(samples))
+    return inner
 
 
 def main():
     parser = argparse.ArgumentParser(description="Render BIM views with Blender")
+    parser.add_argument("--model", default="examples/house_floorplan.json",
+                        help="GH-style JSON floor plan")
     parser.add_argument("--output", default="docs/research/renders",
                         help="Output directory for rendered images")
-    parser.add_argument("--samples", type=int, default=128,
-                        help="Cycles render samples (default: 128)")
+    parser.add_argument("--samples", type=int, default=64,
+                        help="Cycles render samples")
     args = parser.parse_args()
 
+    abs_model = os.path.abspath(args.model)
     abs_out = os.path.abspath(args.output)
     os.makedirs(abs_out, exist_ok=True)
 
-    # Write inner script
-    inner_path = os.path.join(SCRIPT_DIR, "_blender_render_inner.py")
-    with open(inner_path) as f:
-        inner_code = f.read()
+    # Read model
+    with open(abs_model) as f:
+        profiles = json.load(f)
 
-    # Inject parameters
-    inner_code = inner_code.replace("__CYCLES_SAMPLES__", str(args.samples))
+    # Generate script with embedded data
+    script = make_render_script(profiles, args.samples)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-        f.write(inner_code)
+        f.write(script)
         script_path = f.name
 
     cmd = [
@@ -59,25 +65,24 @@ def main():
     ]
 
     print(f"🚀 Blender render: {args.samples} samples")
+    print(f"   Model: {args.model} ({len(profiles)} profiles)")
     print(f"   Output: {abs_out}")
-    print(f"   {' '.join(cmd[:4])} ...")
 
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
 
-    # Show progress (filter noise)
     for line in result.stdout.split("\n"):
-        if any(kw in line for kw in ["Rendered", "complete", "Error", "Saved", "Time:", "Fra:"]) and \
-           "Sample" not in line:
+        if any(kw in line for kw in ["Rendered", "complete", "Error", "Saved"]) and \
+           "Sample" not in line and "Fra:" not in line:
             print(f"   {line.strip()}")
 
     if result.returncode != 0:
         for line in result.stderr.split("\n")[-10:]:
             if line.strip():
                 sys.stderr.write(f"  ⚠️  {line.strip()}\n")
+        sys.exit(1)
 
     os.unlink(script_path)
 
-    # Report output files
     pngs = sorted(f for f in os.listdir(abs_out) if f.endswith(".png"))
     print(f"\n📁 {len(pngs)} renders:")
     for f in pngs:
