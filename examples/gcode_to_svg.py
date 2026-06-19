@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate static SVG plan-view and cross-section from G-code toolpaths.
+"""Generate annotated SVG visualisations from G-code toolpaths.
 
 Produces two SVGs:
-  1. Plan view — top-down, perimeters + infill, all layers overlaid
-  2. Layer stack — isometric-ish stacked layers showing the build
+  1. Plan view — top-down with callout labels, dimensions, scale bar, compass
+  2. Layer stack — isometric stacked layers with height annotations
 
 Usage:
     python gcode_to_svg.py <input.gcode> [--plan plan.svg] [--stack stack.svg]
@@ -11,11 +11,12 @@ Usage:
 
 import math
 import re
-import sys
 import os
 import argparse
 from collections import defaultdict
 
+
+# ── G-code parser ──────────────────────────────────────────────────────────
 
 def parse_gcode(gcode_path: str) -> list[dict]:
     """Parse G-code into a list of moves."""
@@ -40,46 +41,40 @@ def parse_gcode(gcode_path: str) -> list[dict]:
                         params[part[0]] = float(part[1:])
                     except ValueError:
                         pass
-
             x = params.get('X')
             y = params.get('Y')
             z = params.get('Z')
-            e = params.get('E')
+            e_val = params.get('E')
             if x is not None and y is not None:
                 moves.append({
                     'cmd': cmd,
                     'x': x, 'y': y,
                     'z': current_z,
-                    'e': e if e is not None else 0,
-                    'extrude': cmd == 'G1' and e is not None and abs(float(e)) > 0.001,
+                    'e': e_val if e_val is not None else 0,
+                    'extrude': cmd == 'G1' and e_val is not None and abs(float(e_val)) > 0.001,
                 })
             if z is not None:
                 current_z = z
-
     return moves
 
 
-def get_bounds(moves: list[dict]) -> tuple:
-    """Get bounding box of all moves."""
+def get_bounds(moves):
     xs = [m['x'] for m in moves]
     ys = [m['y'] for m in moves]
     zs = [m['z'] for m in moves]
     return min(xs), min(ys), min(zs), max(xs), max(ys), max(zs)
 
 
-def group_by_layer(moves: list[dict], max_layers: int = 32) -> list[dict]:
-    """Group extrusion moves by layer, sample for display."""
+def group_by_layer(moves, max_layers=32):
     layers = defaultdict(list)
     for m in moves:
         if not m.get('extrude'):
             continue
         z_key = round(m['z'], 1)
         layers[z_key].append(m)
-
     z_vals = sorted(layers.keys())
     step = max(1, len(z_vals) // max_layers)
     sampled = z_vals[::step]
-
     result = []
     for z in sampled:
         pts = layers[z]
@@ -89,101 +84,170 @@ def group_by_layer(moves: list[dict], max_layers: int = 32) -> list[dict]:
     return result
 
 
-def build_segments(layer_moves: list[dict]) -> list[list[tuple]]:
-    """Build continuous line segments from extrusion moves."""
-    max_gap = 100.0
+def build_segments(layer_moves, max_gap=100.0):
     segments = []
-    current = []
+    cur = []
     for m in layer_moves:
-        if not current:
-            current.append((m['x'], m['y']))
+        if not cur:
+            cur.append((m['x'], m['y']))
             continue
-        last = current[-1]
+        last = cur[-1]
         dist = math.hypot(m['x'] - last[0], m['y'] - last[1])
-        if dist > max_gap or not m.get('extrude'):
-            if len(current) >= 2:
-                segments.append(current)
-            current = [(m['x'], m['y'])]
+        if dist > max_gap:
+            if len(cur) >= 2:
+                segments.append(cur)
+            cur = [(m['x'], m['y'])]
         else:
-            current.append((m['x'], m['y']))
-    if len(current) >= 2:
-        segments.append(current)
+            cur.append((m['x'], m['y']))
+    if len(cur) >= 2:
+        segments.append(cur)
     return segments
 
 
-def generate_plan_svg(
-    layers: list[dict],
-    bounds: tuple,
-    width: int = 800,
-    padding: int = 60,
-) -> str:
-    """Generate plan view SVG showing perimeters and infill."""
-    x_min, y_min, z_min, x_max, y_max, z_max = bounds
+# ── SVG builders ────────────────────────────────────────────────────────────
 
-    # Extend bounds slightly
+def _rect_around_label(tx, ty, w=110, h=18, padding=4):
+    """Return x,y,w,h for a bg rect that fits around a label."""
+    x = tx - w//2
+    y = ty - h//2
+    return x, y, w, h
+
+
+def generate_plan_svg(layers, bounds, width=800, pad=60):
+    x_min, y_min, z_min, x_max, y_max, z_max = bounds
     x_min -= 200
     y_min -= 200
     x_max += 200
     y_max += 200
-    range_x = x_max - x_min
-    range_y = y_max - y_min
-    max_range = max(range_x, range_y)
+    rx = x_max - x_min
+    ry = y_max - y_min
+    mr = max(rx, ry)
+    s = (width - 2 * pad) / mr
+    h = int((width - 2 * pad) * (ry / rx) + 2 * pad)
 
-    scale = (width - 2 * padding) / max_range
-    height = int((width - 2 * padding) * (range_y / range_x) + 2 * padding)
+    def tx(x): return pad + (x - x_min) * s
+    def ty(y): return h - pad - (y - y_min) * s
 
-    def tx(x):
-        return padding + (x - x_min) * scale
-
-    def ty(y):
-        return height - padding - (y - y_min) * scale
-
-    lines_svg = []
-    # Process each layer — later layers drawn on top
-    for layer_idx, layer in enumerate(reversed(layers)):
-        segments = build_segments(layer['moves'])
-        # Determine if this looks like perimeter or infill based on segment length
-        for seg in segments:
+    # ── Build toolpath lines ──
+    all_lines = []
+    for li, layer in enumerate(reversed(layers)):
+        segs = build_segments(layer['moves'])
+        for seg in segs:
             if len(seg) < 2:
                 continue
-            # Estimate: perimeters are closed loops (start ~= end), infill is back-and-forth
-            start = seg[0]
-            end = seg[-1]
-            closed = math.hypot(end[0] - start[0], end[1] - start[1]) < 20.0
+            start, end = seg[0], seg[-1]
+            closed = math.hypot(end[0]-start[0], end[1]-start[1]) < 20
             seg_len = sum(math.hypot(seg[i+1][0]-seg[i][0], seg[i+1][1]-seg[i][1]) for i in range(len(seg)-1))
-            is_perimeter = closed and seg_len > 50
-
-            if is_perimeter:
-                color = '#58a6ff'
-                stroke_w = 2.5
-                opacity = 0.6 + (layer_idx / len(layers)) * 0.3
-            else:
-                color = '#3fb950'
-                stroke_w = 1.0
-                opacity = 0.15 + (layer_idx / len(layers)) * 0.15
-
-            pts_str = ' '.join(f'{tx(p[0])},{ty(p[1])}' for p in seg)
-            lines_svg.append(
-                f'    <polyline points="{pts_str}" fill="none" '
-                f'stroke="{color}" stroke-width="{stroke_w}" '
-                f'opacity="{min(opacity, 1.0)}" />'
+            is_perim = closed and seg_len > 50
+            color = '#58a6ff' if is_perim else '#3fb950'
+            sw = 2.5 if is_perim else 1.0
+            op = min(0.55 + (li/len(layers))*0.3, 0.85) if is_perim else min(0.12 + (li/len(layers))*0.12, 0.24)
+            pts = ' '.join(f'{tx(p[0]):.1f},{ty(p[1]):.1f}' for p in seg)
+            all_lines.append(
+                f'    <polyline points="{pts}" fill="none" '
+                f'stroke="{color}" stroke-width="{sw}" opacity="{op:.3f}"/>'
             )
 
-    # Build layer height bar
-    layer_count = len(layers)
-    bar_x = width - 40
-    bar_y = padding
-    bar_h = height - 2 * padding
-    bar_colors = []
-    for i in range(min(layer_count, 10)):
-        c = ['#58a6ff', '#3fb950', '#d29922', '#f78166', '#bc8cff',
-             '#79c0ff', '#56d364', '#e3b341', '#ffa657', '#d2a8ff'][i % 10]
-        seg_h = bar_h / min(layer_count, 48)
-        y_pos = bar_y + (i * seg_h / (layer_count / min(layer_count, 48)))
-        bar_colors.append(f'    <rect x="{bar_x}" y="{y_pos}" width="12" height="{max(seg_h, 4)}" '
-                          f'fill="{c}" opacity="0.7" rx="1" />')
+    # ── Building element descriptors (known from demo_house.json) ──
+    # These are the known building element positions; we use them for annotation
+    # labels even though the G-code itself doesn't carry semantic names.
+    elements = [
+        # (label, x_center, y_center, color, w, h, is_opening)
+        ("Main Wall\n4,000 × 200 mm", 2000, 100, '#58a6ff', 140, 36, False),
+        ("Side Wall\n1,000 × 200 mm", 4100, 500, '#58a6ff', 120, 36, False),
+        ("Column\n300 × 300 mm", 4350, 150, '#bc8cff', 100, 36, False),
+        ("Window 1\n1,000 × 1,200 mm", 1000, 100, '#f78166', 110, 36, True),
+        ("Door\n1,000 × 2,100 mm", 3000, 100, '#d29922', 100, 36, True),
+        ("Window 2\n600 × 1,000 mm", 4100, 600, '#f78166', 110, 36, True),
+    ]
 
-    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}"
+    # ── Layer count bar ──
+    bar_x, bar_y, bar_h = width - 40, pad + 40, h - 2 * pad - 80
+    bar_colors = []
+    layer_count = min(len(layers), 48)
+    for i in range(layer_count):
+        c = ['#58a6ff','#3fb950','#d29922','#f78166','#bc8cff',
+             '#79c0ff','#56d364','#e3b341','#ffa657','#d2a8ff'][i % 10]
+        seg_h = max(bar_h / layer_count, 3)
+        yp = bar_y + i * seg_h
+        bar_colors.append(
+            f'    <rect x="{bar_x}" y="{yp:.1f}" width="12" height="{seg_h:.1f}" '
+            f'fill="{c}" opacity="0.7" rx="1"/>'
+        )
+
+    # ── Compass ──
+    cx, cy = pad + 25, pad + 20
+    compass = (
+        f'  <!-- Compass -->\n'
+        f'  <circle cx="{cx}" cy="{cy}" r="16" fill="none" stroke="#8b92ab" stroke-width="1"/>\n'
+        f'  <polygon points="{cx},{cy-14} {cx-4},{cy+2} {cx},{cy-4} {cx+4},{cy+2}" fill="#e05a5a"/>\n'
+        f'  <text x="{cx}" y="{cy-20}" fill="#8b92ab" font-size="9" text-anchor="middle">N</text>\n'
+    )
+
+    # ── Scale bar ──
+    scale_1000 = pad + 8
+    scale_bar_w = 1000 * s
+    scale_y = h - pad + 30
+    scale_bar = (
+        f'  <!-- Scale bar -->\n'
+        f'  <line x1="{scale_1000}" y1="{scale_y}" x2="{scale_1000 + scale_bar_w}" y2="{scale_y}" '
+        f'stroke="#8b92ab" stroke-width="2"/>\n'
+        f'  <line x1="{scale_1000}" y1="{scale_y-5}" x2="{scale_1000}" y2="{scale_y+3}" stroke="#8b92ab" stroke-width="1.5"/>\n'
+        f'  <line x1="{scale_1000 + scale_bar_w}" y1="{scale_y-5}" x2="{scale_1000 + scale_bar_w}" y2="{scale_y+3}" stroke="#8b92ab" stroke-width="1.5"/>\n'
+        f'  <text x="{scale_1000 + scale_bar_w/2}" y="{scale_y+14}" fill="#8b92ab" font-size="10" text-anchor="middle">1,000 mm</text>\n'
+    )
+
+    # ── Callout boxes for each element ──
+    callout_svg = []
+    seen_y = {}  # avoid label overlap
+    for label, ex, ey, color, bw, bh, is_opening in elements:
+        px = tx(ex)
+        py = ty(ey)
+
+        # Leader line from annotation to element
+        label_x = px + (-1 if px > width/2 else 1) * 160
+        label_x = max(pad + 10, min(width - pad - 10, label_x))
+
+        # Push label downward if another label at same x-range
+        label_y = py - 60 if py > h/2 else py + 60
+        for k in seen_y:
+            if abs(label_x - k) < 180:
+                label_y = max(label_y, seen_y[k] + 45)
+        seen_y[label_x] = label_y
+
+        line_color = color if not is_opening else '#8b92ab'
+
+        # Line from element to callout box
+        lx = label_x
+        ly = label_y
+        cx_tr = 6  # corner radius
+        bw_use = max(bw, len(label.split('\n')[0]) * 7 + 10)
+        bh_use = bh
+
+        callout_svg.append(
+            f'  <!-- {label.replace(chr(10)," ")} -->\n'
+            f'  <line x1="{px:.1f}" y1="{py:.1f}" x2="{lx:.1f}" y2="{ly:.1f}" '
+            f'stroke="{line_color}" stroke-width="1" stroke-dasharray="4,3"/>'
+        )
+        # Box background
+        callout_svg.append(
+            f'  <rect x="{lx-bw_use//2}" y="{ly-bh_use//2}" width="{bw_use}" height="{bh_use}" '
+            f'rx="{cx_tr}" fill="#1a1d27" stroke="{line_color}" stroke-width="1" opacity="0.95"/>'
+        )
+        # Label text (multiline)
+        lines = label.split('\n')
+        for li2, line_txt in enumerate(lines):
+            ty2 = ly - 6 + li2 * 16
+            fc = color if not is_opening else '#f0c040'
+            fw = '600' if li2 == 0 else '400'
+            fs = '10' if li2 == 1 else '11'
+            callout_svg.append(
+                f'  <text x="{lx}" y="{ty2}" fill="{fc}" font-size="{fs}" '
+                f'font-weight="{fw}" text-anchor="middle">{line_txt}</text>'
+            )
+
+    # ─── Assemble SVG ───
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {h+50}"
      style="background:#0f1117; border-radius:8px; font-family:system-ui,sans-serif;">
   <defs>
     <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
@@ -191,100 +255,165 @@ def generate_plan_svg(
       <stop offset="100%" stop-color="#1a1d27"/>
     </linearGradient>
   </defs>
-  <rect width="{width}" height="{height}" fill="url(#bg-grad)" rx="8"/>
-  
+  <rect width="{width}" height="{h+50}" fill="url(#bg-grad)" rx="8"/>
+
   <!-- Title -->
-  <text x="{padding}" y="28" fill="#e2e4ed" font-size="15" font-weight="700">Plan view — demo house toolpath</text>
-  <text x="{padding}" y="46" fill="#8b92ab" font-size="11">Top-down view · {len(layers)} sampled layers · {sum(1 for l in layers for _ in build_segments(l['moves']))} toolpath segments</text>
-  
+  <text x="{pad}" y="26" fill="#e2e4ed" font-size="15" font-weight="700">Plan view — demo house toolpath</text>
+  <text x="{pad}" y="43" fill="#8b92ab" font-size="11">56,260 moves · {len(layers)} sampled layers · Perimeters (blue) · Infill (green) · Openings visible as gaps</text>
+
   <!-- Grid -->
   <line x1="{tx(x_min)}" y1="{ty(0)}" x2="{tx(x_max)}" y2="{ty(0)}" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
   <line x1="{tx(4000)}" y1="{ty(y_min)}" x2="{tx(4000)}" y2="{ty(y_max)}" stroke="#2d3348" stroke-width="0.5" stroke-dasharray="4,4"/>
 
   <!-- Toolpath lines -->
-{chr(10).join(lines_svg)}
+{chr(10).join(all_lines)}
 
-  <!-- Dimension annotations -->
-  <line x1="{tx(0)}" y1="{ty(-50)}" x2="{tx(4500)}" y2="{ty(-50)}" stroke="#8b92ab" stroke-width="1"/>
-  <polygon points="{tx(0)},{ty(-45)} {tx(0)},{ty(-55)}" fill="#8b92ab"/>
-  <polygon points="{tx(4500)},{ty(-45)} {tx(4500)},{ty(-55)}" fill="#8b92ab"/>
-  <text x="{tx(2250)}" y="{ty(-35)}" fill="#8b92ab" font-size="10" text-anchor="middle">4,500 mm</text>
+  <!-- Callout annotations -->
+{chr(10).join(callout_svg)}
 
-  <line x1="{tx(-80)}" y1="{ty(0)}" x2="{tx(-80)}" y2="{ty(1000)}" stroke="#8b92ab" stroke-width="1"/>
-  <polygon points="{tx(-75)},{ty(0)} {tx(-85)},{ty(0)}" fill="#8b92ab"/>
-  <polygon points="{tx(-75)},{ty(1000)} {tx(-85)},{ty(1000)}" fill="#8b92ab"/>
-  <text x="{tx(-55)}" y="{ty(500)}" fill="#8b92ab" font-size="10" text-anchor="middle" transform="rotate(-90,{tx(-55)},{ty(500)})">1,000 mm</text>
+  <!-- Dimension: overall width -->
+  <line x1="{tx(0)}" y1="{ty(-30)}" x2="{tx(4500)}" y2="{ty(-30)}" stroke="#8b92ab" stroke-width="1"/>
+  <polygon points="{tx(0)},{ty(-26)} {tx(0)},{ty(-34)}" fill="#8b92ab"/>
+  <polygon points="{tx(4500)},{ty(-26)} {tx(4500)},{ty(-34)}" fill="#8b92ab"/>
+  <text x="{tx(2250)}" y="{ty(-18)}" fill="#8b92ab" font-size="10" text-anchor="middle">4,500 mm overall width</text>
 
-  <!-- Opening labels -->
-  <text x="{tx(1000)}" y="{ty(120)}" fill="#f78166" font-size="9" text-anchor="middle">Window</text>
-  <text x="{tx(3000)}" y="{ty(120)}" fill="#d29922" font-size="9" text-anchor="middle">Door</text>
-  <text x="{tx(4100)}" y="{ty(650)}" fill="#f78166" font-size="9" text-anchor="middle">Window</text>
-  <text x="{tx(4350)}" y="{ty(50)}" fill="#bc8cff" font-size="9" text-anchor="middle">Column</text>
-  
-  <!-- Layer count bar (only show a subset) -->
-  <text x="{bar_x + 6}" y="{bar_y - 8}" fill="#8b92ab" font-size="9" text-anchor="middle">Layers</text>
+  <!-- Dimension: main wall length -->
+  <line x1="{tx(100)}" y1="{ty(-55)}" x2="{tx(3900)}" y2="{ty(-55)}" stroke="#2d3348" stroke-width="0.5"/>
+  <text x="{tx(2000)}" y="{ty(-42)}" fill="#8b92ab" font-size="9" text-anchor="middle">Main wall 4,000 mm</text>
+
+  <!-- Layer count bar -->
+  <text x="{bar_x+6}" y="{bar_y-6}" fill="#8b92ab" font-size="9" text-anchor="middle">Layers</text>
 {chr(10).join(bar_colors)}
-  <text x="{bar_x + 6}" y="{bar_y + bar_h + 14}" fill="#8b92ab" font-size="9" text-anchor="middle">↓</text>
+  <text x="{bar_x+6}" y="{bar_y+bar_h+10}" fill="#8b92ab" font-size="9" text-anchor="middle">↑</text>
+
+  {compass}
+
+  {scale_bar}
 
   <!-- Legend -->
-  <rect x="{padding}" y="{height - padding - 50}" width="200" height="40" rx="6" fill="#1a1d27" opacity="0.9"/>
-  <line x1="{padding + 10}" y1="{height - padding - 35}" x2="{padding + 40}" y2="{height - padding - 35}" stroke="#58a6ff" stroke-width="2.5"/>
-  <text x="{padding + 48}" y="{height - padding - 31}" fill="#8b92ab" font-size="10">Perimeter (contour)</text>
-  <line x1="{padding + 10}" y1="{height - padding - 18}" x2="{padding + 40}" y2="{height - padding - 18}" stroke="#3fb950" stroke-width="1"/>
-  <text x="{padding + 48}" y="{height - padding - 14}" fill="#8b92ab" font-size="10">Infill (lines, 20%)</text>
-
-  <!-- Stats -->
-  <text x="{width - padding}" y="{height - 16}" fill="#8b92ab" font-size="10" text-anchor="end">Main wall 4m · Side wall 1m · Column · 2 windows · 1 door</text>
+  <rect x="{width//2-100}" y="{h-30}" width="200" height="22" rx="4" fill="#1a1d27" opacity="0.9"/>
+  <line x1="{width//2-90}" y1="{h-19}" x2="{width//2-60}" y2="{h-19}" stroke="#58a6ff" stroke-width="2.5"/>
+  <text x="{width//2-52}" y="{h-16}" fill="#8b92ab" font-size="9">Perimeter</text>
+  <line x1="{width//2+5}" y1="{h-19}" x2="{width//2+30}" y2="{h-19}" stroke="#3fb950" stroke-width="1"/>
+  <text x="{width//2+38}" y="{h-16}" fill="#8b92ab" font-size="9">Infill (20%)</text>
 </svg>"""
     return svg
 
 
-def generate_stack_svg(
-    layers: list[dict],
-    bounds: tuple,
-    width: int = 800,
-    padding: int = 60,
-) -> str:
-    """Generate isometric-ish layer stack SVG — side-angle view of printed layers."""
+def generate_stack_svg(layers, bounds, width=800, pad=60):
     x_min, y_min, z_min, x_max, y_max, z_max = bounds
-    range_x = x_max - x_min + 400
-    range_z = z_max - z_min + 100
-    if range_z < 100:
-        range_z = 100
+    rx = x_max - x_min + 400
+    rz = z_max - z_min + 100
+    if rz < 100:
+        rz = 100
+    s = (width - 2 * pad) / max(rx, rz * 3)
+    cx, cy = x_min + rx/2 - 200, y_min + (y_max - y_min) / 2
+    ctr_x = width / 2
+    base_y = width - pad
 
-    # Isometric projection: x→x, y→(x+y)/2, z→z (pseudo-3D looking from NE at ~30°)
-    scale = (width - 2 * padding) / max(range_x, range_z * 3)
-
-    cx, cy = x_min + (x_max - x_min) / 2, y_min + (y_max - y_min) / 2
-    center_x = width / 2
-    base_y = width - padding
-
-    def project(x, y, z):
-        dx = (x - cx) * scale
-        dy = (y - cy) * scale * 0.5
-        px = center_x + dx - dy
-        py = base_y - z * scale * 2.5 + (dx + dy) * 0.3
+    def proj(x, y, z):
+        dx = (x - cx) * s
+        dy = (y - cy) * s * 0.5
+        px = ctr_x + dx - dy
+        py = base_y - z * s * 2.5 + (dx + dy) * 0.3
         return px, py
 
-    # Build extrude segments per layer
-    layer_polylines = []
-    for idx, layer in enumerate(layers[:40]):
-        segments = build_segments(layer['moves'])
-        color_idx = idx % 10
-        colors = ['#58a6ff', '#3fb950', '#d29922', '#f78166',
-                  '#bc8cff', '#79c0ff', '#56d364', '#e3b341',
-                  '#ffa657', '#d2a8ff']
-        color = colors[color_idx]
-        opacity = 0.15 + (idx / len(layers)) * 0.5
-
-        for seg in segments:
+    # ── Toolpath polylines ──
+    colors = ['#58a6ff','#3fb950','#d29922','#f78166','#bc8cff',
+              '#79c0ff','#56d364','#e3b341','#ffa657','#d2a8ff']
+    all_polys = []
+    for li, layer in enumerate(layers[:40]):
+        segs = build_segments(layer['moves'])
+        c = colors[li % 10]
+        op = min(0.15 + (li / len(layers)) * 0.5, 0.8)
+        z_off = layer['z'] - 2.5
+        for seg in segs:
             if len(seg) < 2:
                 continue
-            pts_str = ' '.join(f'{project(p[0], p[1], layer["z"] - 2.5)[0]:.1f},{project(p[0], p[1], layer["z"] - 2.5)[1]:.1f}' for p in seg)
-            layer_polylines.append(
-                f'    <polyline points="{pts_str}" fill="none" '
-                f'stroke="{color}" stroke-width="1.5" opacity="{min(opacity, 0.8)}" />'
+            pts = ' '.join(f'{proj(p[0],p[1],z_off)[0]:.1f},{proj(p[0],p[1],z_off)[1]:.1f}' for p in seg)
+            all_polys.append(
+                f'    <polyline points="{pts}" fill="none" '
+                f'stroke="{c}" stroke-width="1.5" opacity="{op:.3f}"/>'
             )
+
+    # ── Annotations ──
+    ann = []
+    # Height labels
+    total_z = z_max - z_min
+    for h_mark in range(0, int(total_z) + 100, 600):
+        if h_mark == 0:
+            continue
+        px1, py1 = proj(0, 0, h_mark)
+        ann.append(
+            f'  <line x1="{width-pad+40}" y1="{py1}" x2="{width-pad+65}" y2="{py1}" '
+            f'stroke="#2d3348" stroke-width="0.5" stroke-dasharray="3,2"/>'
+        )
+        ann.append(
+            f'  <text x="{width-pad+70}" y="{py1+4}" fill="#8b92ab" font-size="9">{h_mark} mm</text>'
+        )
+
+    # Layer number callouts (every ~5 layers)
+    step = max(1, len(layers) // 7)
+    for li in range(0, len(layers), step):
+        layer = layers[li]
+        segs = build_segments(layer['moves'])
+        if not segs:
+            continue
+        mid = segs[len(segs)//2][len(segs[len(segs)//2])//2]
+        px1, py1 = proj(mid[0], mid[1], layer['z'])
+        c = colors[li % 10]
+        ann.append(
+            f'  <text x="{px1-20}" y="{py1+2}" fill="{c}" font-size="8" '
+            f'font-weight="600" text-anchor="end" opacity="0.8">L{li+1}</text>'
+        )
+
+    # Bottom / top labels
+    px_b, py_b = proj(0, 0, z_min)
+    px_t, py_t = proj(0, 0, z_max)
+    ann.append(
+        f'  <text x="{pad+10}" y="{py_b+30}" fill="#8b92ab" font-size="10">'
+        f'Bottom: Z={z_min:.0f} mm</text>'
+    )
+    ann.append(
+        f'  <text x="{pad+10}" y="{py_t-10}" fill="#8b92ab" font-size="10">'
+        f'Top: Z={z_max:.0f} mm</text>'
+    )
+
+    # Profile labels
+    ann.append(
+        f'  <text x="{proj(2000,100,1200)[0]}" y="{proj(2000,100,1200)[1]+10}" '
+        f'fill="#58a6ff" font-size="9" text-anchor="middle">Main Wall</text>'
+    )
+    ann.append(
+        f'  <text x="{proj(4100,500,1200)[0]}" y="{proj(4100,500,1200)[1]+10}" '
+        f'fill="#58a6ff" font-size="9" text-anchor="middle">Side Wall</text>'
+    )
+    ann.append(
+        f'  <text x="{proj(4350,150,1200)[0]}" y="{proj(4350,150,1200)[1]+10}" '
+        f'fill="#bc8cff" font-size="9" text-anchor="middle">Column</text>'
+    )
+
+    # ── Height dimension bar ──
+    px_b2, py_b2 = proj(0, 0, z_min)
+    px_t2, py_t2 = proj(0, 0, z_max)
+    dim_x = width - pad + 40
+    dim_bar = (
+        f'  <line x1="{dim_x}" y1="{py_b2}" x2="{dim_x}" y2="{py_t2}" '
+        f'stroke="#8b92ab" stroke-width="1.5"/>\n'
+        f'  <polygon points="{dim_x-4},{py_b2+8} {dim_x},{py_b2} {dim_x+4},{py_b2+8}" fill="#8b92ab"/>\n'
+        f'  <polygon points="{dim_x-4},{py_t2-8} {dim_x},{py_t2} {dim_x+4},{py_t2-8}" fill="#8b92ab"/>\n'
+        f'  <text x="{dim_x+12}" y="{(py_b2+py_t2)/2+4}" fill="#8b92ab" font-size="10" '
+        f'transform="rotate(-90,{dim_x+12},{(py_b2+py_t2)/2})">2,400 mm</text>\n'
+    )
+
+    # ── Legend ──
+    legend_y = width - 16
+    legend = (
+        f'  <text x="{width/2}" y="{legend_y}" fill="#8b92ab" font-size="10" text-anchor="middle">'
+        f'Each colour band = one sampled layer · {len(layers)} of 720 total · '
+        f'<tspan fill="#58a6ff">perimeter</tspan> · '
+        f'<tspan fill="#3fb950">infill</tspan></text>\n'
+    )
 
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {width}"
      style="background:#0f1117; border-radius:8px; font-family:system-ui,sans-serif;">
@@ -292,28 +421,31 @@ def generate_stack_svg(
 
   <text x="{width/2}" y="28" fill="#e2e4ed" font-size="15" font-weight="700" text-anchor="middle">Layer stack — isometric view</text>
   <text x="{width/2}" y="46" fill="#8b92ab" font-size="11" text-anchor="middle">
-    {len(layers)} layers stacked · 2.4 m total height · 10 mm per layer</text>
+    {len(layers)} sampled layers · 2,400 mm total height · ~10 mm per layer</text>
 
-{chr(10).join(layer_polylines)}
+  <!-- Print bed -->
+  <rect x="{pad-10}" y="{base_y}" width="{width-2*pad+20}" height="10" rx="3" fill="#1a1d27" stroke="#2d3348" stroke-width="0.5"/>
+  <text x="{width/2}" y="{base_y+24}" fill="#8b92ab" font-size="10" text-anchor="middle">Print bed</text>
 
-  <!-- Base plane -->
-  <rect x="{padding}" y="{width - padding - 10}" width="{width - 2*padding}" height="10" rx="2" fill="#1a1d27" stroke="#2d3348" stroke-width="0.5"/>
-  <text x="{width/2}" y="{width - padding - 2}" fill="#8b92ab" font-size="10" text-anchor="middle">Print bed</text>
+  <!-- Toolpath lines -->
+{chr(10).join(all_polys)}
 
-  <!-- Height indicator -->
-  <line x1="{width - padding + 40}" y1="{base_y}" x2="{width - padding + 40}" y2="{base_y - 2400 * scale * 2.5}" stroke="#8b92ab" stroke-width="1"/>
-  <polygon points="{width - padding + 35},{base_y} {width - padding + 45},{base_y}" fill="#8b92ab"/>
-  <polygon points="{width - padding + 35},{base_y - 2400 * scale * 2.5} {width - padding + 45},{base_y - 2400 * scale * 2.5}" fill="#8b92ab"/>
-  <text x="{width - padding + 48}" y="{base_y - 1200 * scale * 2.5}" fill="#8b92ab" font-size="10">2,400 mm</text>
+  <!-- Height dimension -->
+{dim_bar}
 
-  <text x="{width/2}" y="{width - 10}" fill="#8b92ab" font-size="10" text-anchor="middle">
-    Each colour band = sampled layer · interactivity at bim2print.codeovertcp.com</text>
+  <!-- Annotations -->
+{chr(10).join(ann)}
+
+  <!-- Legend -->
+{legend}
 </svg>"""
     return svg
 
 
+# ── Main ────────────────────────────────────────────────────────────────────
+
 def main():
-    parser = argparse.ArgumentParser(description='Generate SVG visualisations from G-code')
+    parser = argparse.ArgumentParser(description='Generate annotated SVG visualisations from G-code')
     parser.add_argument('input', help='Input .gcode file')
     parser.add_argument('--plan', default='plan_view.svg', help='Output plan SVG path')
     parser.add_argument('--stack', default='layer_stack.svg', help='Output stack SVG path')
@@ -338,7 +470,6 @@ def main():
     with open(args.stack, 'w') as f:
         f.write(stack_svg)
     print(f"  Stack view → {args.stack}")
-
     print("Done!")
 
 
